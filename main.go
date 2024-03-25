@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"reflect"
 
 	tgbotapi "github.com/Syfaro/telegram-bot-api"
 	"github.com/joho/godotenv"
@@ -41,24 +40,30 @@ func main() {
 				update.Message, "", "  ",
 			)
 			if err != nil {
-				fmt.Println("Error marshaling message to JSON:", err)
+				msg := tgbotapi.NewMessage(
+					update.Message.Chat.ID,
+					fmt.Sprintf(
+						"Error marshaling message to JSON:\n%s", err,
+					),
+				)
+				bot.Send(msg)
 				continue
 			}
 			msg := tgbotapi.NewMessage(
-				update.Message.Chat.ID, string(messageJSON),
+				update.Message.Chat.ID, fmt.Sprintf("```json\n%s\n```", messageJSON),
 			)
+			msg.ParseMode = "MarkdownV2"
 			bot.Send(msg)
-			fmt.Println(string(messageJSON))
 		}
 
 		//Проверка типов сообщений
-		if reflect.TypeOf(update.Message.Text).Kind() == reflect.String && update.Message.Text != "" {
+		/*if reflect.TypeOf(update.Message.Text).Kind() == reflect.String && update.Message.Text != "" {
 		} else {
 			msg := tgbotapi.NewMessage(
 				update.Message.Chat.ID, "Incorrect type",
 			)
 			bot.Send(msg)
 			continue
-		}
+		}*/
 	}
 }
