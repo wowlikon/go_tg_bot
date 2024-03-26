@@ -1,2 +1,13 @@
+# Ignore all
+*
+
+# Exclude files with extension
+!*.*
+
+# Configuration files
 .env
 .censitive
+
+# Golang packages files
+go.mod
+go.sum
