@@ -89,7 +89,7 @@ func main() {
 					nocmd(bot, update)
 				}
 			} else {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "not cmd")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "not command")
 				bot.Send(msg)
 			}
 		}
