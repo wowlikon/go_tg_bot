@@ -12,6 +12,20 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type user struct {
+	ID uint32
+	isAdmin bool
+	directory string
+}
+
+func NewUser(id uint32, admin bool) {
+	return &user{
+		id,
+		admin,
+		"~"
+	}
+}
+
 func GetIndex(s []string, e string) int {
 	for i := range s {
 		if s[i] == e {
@@ -22,6 +36,9 @@ func GetIndex(s []string, e string) int {
 }
 
 func main() {
+
+	var users []user
+
 	//Проверка аргументов запуска
 	args := os.Args
 	fmt.Println(args)
@@ -82,11 +99,13 @@ func main() {
 				parts := strings.Split(update.Message.Text, " ")
 				switch parts[0] {
 				case "/start":
-					start(bot, parts, update)
+					start(bot, &users, update, parts)
+				case "/users":
+					userList(bot, &users, update)
 				case "/help":
-					help(bot, update)
+					help(bot, &users, update)
 				default:
-					nocmd(bot, update)
+					nocmd(bot, &users, update)
 				}
 			} else {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "not command")
@@ -96,17 +115,37 @@ func main() {
 	}
 }
 
-func start(bot *tgbotapi.BotAPI, parts []string, update tgbotapi.Update) {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Hello, %s", parts))
+func start(bot *tgbotapi.BotAPI, users *[]user, update tgbotapi.Update, parts []string) {
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Hello, %s", update.Message.From.UserName))
 	bot.Send(msg)
 }
 
-func help(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
+func userList(bot *tgbotapi.BotAPI, users *[]user, update tgbotapi.Update) {
+	usersJSON, err := json.MarshalIndent(
+        	*users, "", "  ",
+        )
+        if err != nil {
+        	msg := tgbotapi.NewMessage(
+                	update.Message.Chat.ID,
+	                fmt.Sprintf(
+        	        	"Error marshaling users to JSON: \n%s", err,
+                	),
+                )
+                bot.Send(msg)
+        }
+        msg := tgbotapi.NewMessage(
+        	update.Message.Chat.ID, fmt.Sprintf("```json\n%s\n```", usersJSON),
+        )
+        msg.ParseMode = "MarkdownV2"
+        bot.Send(msg)
+}
+
+func help(bot *tgbotapi.BotAPI, users *[]user, update tgbotapi.Update) {
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "TODO")
 	bot.Send(msg)
 }
 
-func nocmd(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
+func nocmd(bot *tgbotapi.BotAPI, users *[]user, update tgbotapi.Update) {
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error 404 command not found :(")
 	bot.Send(msg)
 }
