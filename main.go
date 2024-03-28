@@ -107,21 +107,30 @@ func main() {
 
 		//Вывод данных о сообщении
 		if debug {
-			messageJSON, err := json.MarshalIndent(
-				update.Message, "", "  ",
+			var ToID int64
+			if update.Message != nil {
+				ToID = update.Message.Chat.ID
+			}
+			if update.CallbackQuery != nil {
+				ToID = update.CallbackQuery.Message.Chat.ID
+			}
+			if ToID == 0 {
+				continue
+			}
+			updateJSON, err := json.MarshalIndent(
+				update, "", "  ",
 			)
 			if err != nil {
 				msg := tgbotapi.NewMessage(
-					update.Message.Chat.ID,
-					fmt.Sprintf(
-						"Error marshaling message to JSON: \n%s", err,
+					ToID, fmt.Sprintf(
+						"Error marshaling update to JSON: \n%s", err,
 					),
 				)
 				bot.Send(msg)
 				continue
 			}
 			msg := tgbotapi.NewMessage(
-				update.Message.Chat.ID, fmt.Sprintf("```json\n%s\n```", messageJSON),
+				ToID, fmt.Sprintf("```json\n%s\n```", updateJSON),
 			)
 			msg.ParseMode = "MarkdownV2"
 			bot.Send(msg)
@@ -167,6 +176,8 @@ func main() {
 					userList(bot, update, &users)
 				case "/status":
 					status(bot, update, &users)
+				case "/debug":
+					toggleDebug(bot, update, &users, parts)
 				case "/help":
 					help(bot, update)
 				default:
@@ -180,7 +191,7 @@ func main() {
 
 			//Проверка типа на событие кнопки
 		} else if update.CallbackQuery != nil {
-			msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "callback TODO")
+			msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, fmt.Sprintf("callback %s", update.CallbackQuery.Data))
 			bot.Send(msg)
 		}
 	}
@@ -256,6 +267,9 @@ func userList(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 			kb = append(kb, ikbRow)
 		}
 
+		exRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Example", "hello.world"))
+		kb = append(kb, exRow)
+
 		msg = tgbotapi.NewMessage(
 			update.Message.Chat.ID,
 			"Here are the users:",
@@ -264,6 +278,41 @@ func userList(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 		msg.ReplyMarkup = ikb
 	}
 	msg.ParseMode = "MarkdownV2"
+	bot.Send(msg)
+}
+
+func toggleDebug(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts []string) {
+	my_status := Unregistered
+	for _, user := range *users {
+		if user.ID == update.Message.Chat.ID {
+			my_status = user.Status
+			break
+		}
+	}
+	if my_status != SU {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Access denied!")
+		bot.Send(msg)
+		return
+	}
+	if len(parts) == 1 {
+		parts = append(parts, "")
+	}
+	if strings.ToLower(parts[1]) == "on" {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Debug mode on!")
+		bot.Send(msg)
+		debug = true
+		return
+	}
+	if strings.ToLower(parts[1]) == "off" {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Debug mode off!")
+		bot.Send(msg)
+		debug = false
+		return
+	}
+	msg := tgbotapi.NewMessage(
+		update.Message.Chat.ID,
+		fmt.Sprintf("Debug: %t \n/debug [on/off]", debug),
+	)
 	bot.Send(msg)
 }
 
