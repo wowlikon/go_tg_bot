@@ -39,10 +39,11 @@ func AccessList() []Access {
 }
 
 type user struct {
-	ID        int64  `json:"id"`
-	Status    Access `json:"status"`
-	UserName  string `json:"name"`
-	Directory string `json:"directory"`
+	ID          int64  `json:"id"`
+	Status      Access `json:"status"`
+	UserName    string `json:"name"`
+	Directory   string `json:"directory"`
+	EditMessage int64  `json:"edit_msg"`
 }
 
 func generateKey(n int) (string, error) {
@@ -68,7 +69,7 @@ func FindUser(users *[]user, id int64) user {
 			return user
 		}
 	}
-	return user{id, Unregistered, "Unknown", "~"}
+	return user{id, Unregistered, "Unknown", "~", 0}
 }
 
 func FindID(update tgbotapi.Update) int64 {
@@ -79,6 +80,15 @@ func FindID(update tgbotapi.Update) int64 {
 		return update.CallbackQuery.Message.Chat.ID
 	}
 	return 0
+}
+
+func UpdOrSend(bot tgbotapi.BotAPI, emsg *tgbotapi.EditMessageTextConfig) {
+	_, err := bot.Send(*emsg)
+	if err != nil {
+		msg := tgbotapi.NewMessage(emsg.ChatID, emsg.Text)
+		msg.ReplyMarkup = emsg.ReplyMarkup
+		bot.Send(msg)
+	}
 }
 
 func main() {
@@ -171,7 +181,7 @@ func main() {
 				}
 
 				if idx == -1 {
-					users = append(users, user{id, SU, userName, "~"})
+					users = append(users, user{id, SU, userName, "~", 0})
 				} else {
 					users[idx].Status = SU
 				}
@@ -251,7 +261,7 @@ func start(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 
 	//Приветствие для пользователя
 	if !exist {
-		*users = append(*users, user{id, Waiting, userName, "~"})
+		*users = append(*users, user{id, Waiting, userName, "~", 0})
 		msg = tgbotapi.NewMessage(ToID, fmt.Sprintf("Hello, %s", userName))
 	} else {
 		msg = tgbotapi.NewMessage(ToID, "Already exist")
@@ -268,7 +278,7 @@ func userList(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 		return
 	}
 	if FindUser(users, ToID).Status < Admin {
-		msg = tgbotapi.NewMessage(ToID, "Access denied")
+		msg := tgbotapi.NewMessage(ToID, "Access denied")
 		bot.Send(msg)
 		return
 	}
