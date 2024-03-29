@@ -105,18 +105,19 @@ func main() {
 	//Получаем обновления от бота
 	for update := range bot.GetUpdatesChan(u) {
 
+		var ToID int64
+		if update.Message != nil {
+			ToID = update.Message.Chat.ID
+		}
+		if update.CallbackQuery != nil {
+			ToID = update.CallbackQuery.Message.Chat.ID
+		}
+		if ToID == 0 {
+			continue
+		}
+
 		//Вывод данных о сообщении
 		if debug {
-			var ToID int64
-			if update.Message != nil {
-				ToID = update.Message.Chat.ID
-			}
-			if update.CallbackQuery != nil {
-				ToID = update.CallbackQuery.Message.Chat.ID
-			}
-			if ToID == 0 {
-				continue
-			}
 			updateJSON, err := json.MarshalIndent(
 				update, "", "  ",
 			)
@@ -160,7 +161,7 @@ func main() {
 				}
 
 				//Приветствие для суперадминистратора
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("```welcome $sudo hello_world --admin %s```", userName))
+				msg = tgbotapi.NewMessage(ToID, fmt.Sprintf("```welcome $sudo hello_world --admin %s```", userName))
 				msg.ParseMode = "MarkdownV2"
 				bot.Send(msg)
 				continue
@@ -185,13 +186,22 @@ func main() {
 				}
 			} else {
 				//Если просто текст
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "not command TODO")
+				msg := tgbotapi.NewMessage(ToID, "not command TODO")
 				bot.Send(msg)
 			}
 
 			//Проверка типа на событие кнопки
 		} else if update.CallbackQuery != nil {
-			msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, fmt.Sprintf("callback %s", update.CallbackQuery.Data))
+			callback := tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)
+			if _, err := bot.Request(callback); err != nil {
+				msg := tgbotapi.NewMessage(
+					ToID, fmt.Sprintf("Error marshaling update to JSON: \n%s", err),
+                                )
+                                bot.Send(msg)
+                                continue
+			}
+
+			msg := tgbotapi.NewMessage(ToID, fmt.Sprintf("callback %s", update.CallbackQuery.Data))
 			bot.Send(msg)
 		}
 	}
@@ -263,12 +273,10 @@ func userList(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 
 		for _, user := range *users {
 			txt := fmt.Sprintf("%s (%s)", user.UserName, user.Status)
-			ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonURL(txt, fmt.Sprintf("tg://openmessage?user_id=%d", user.ID)))
+			//ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonURL(txt, fmt.Sprintf("tg://openmessage?user_id=%d", user.ID)))
+			ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(txt, fmt.Sprintf("manage.user.%d", user.ID)))
 			kb = append(kb, ikbRow)
 		}
-
-		exRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Example", "hello.world"))
-		kb = append(kb, exRow)
 
 		msg = tgbotapi.NewMessage(
 			update.Message.Chat.ID,
@@ -313,6 +321,23 @@ func toggleDebug(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, pa
 		update.Message.Chat.ID,
 		fmt.Sprintf("Debug: %t \n/debug [on/off]", debug),
 	)
+	bot.Send(msg)
+}
+
+func userInfo(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
+	my_status := Unregistered
+	for _, user := range *user {
+		if user.ID == update.Message.Chat.ID {
+			my_status = user.Status
+			break
+		}
+	}
+	
+	msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "TODO")
+	//info text
+	//profile button
+	//set status
+	//close
 	bot.Send(msg)
 }
 
