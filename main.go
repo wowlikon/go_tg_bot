@@ -15,7 +15,6 @@ import (
 )
 
 var debug, key_used bool
-var Owner user
 
 type Access int
 
@@ -72,6 +71,16 @@ func FindUser(users *[]user, id int64) user {
 	return user{id, Unregistered, "Unknown", "~"}
 }
 
+func FindID(update tgbotapi.Update) int64 {
+	if update.Message != nil {
+		return update.Message.Chat.ID
+	}
+	if update.CallbackQuery != nil {
+		return update.CallbackQuery.Message.Chat.ID
+	}
+	return 0
+}
+
 func main() {
 	var users []user
 
@@ -118,13 +127,7 @@ func main() {
 	//Получаем обновления от бота
 	for update := range bot.GetUpdatesChan(u) {
 
-		var ToID int64
-		if update.Message != nil {
-			ToID = update.Message.Chat.ID
-		}
-		if update.CallbackQuery != nil {
-			ToID = update.CallbackQuery.Message.Chat.ID
-		}
+		ToID := FindID(update)
 		if ToID == 0 {
 			continue
 		}
@@ -215,6 +218,7 @@ func main() {
 				continue
 			}
 
+			//Проверка события
 			switch parts[0] {
 			case "user":
 				userInfo(bot, update, &users, parts)
@@ -238,6 +242,7 @@ func main() {
 // Функции команд
 func start(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 	var msg tgbotapi.MessageConfig
+	ToID := FindID(update)
 
 	//Проверка на повторный запуск
 	userName := update.Message.From.UserName
@@ -247,9 +252,9 @@ func start(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 	//Приветствие для пользователя
 	if !exist {
 		*users = append(*users, user{id, Waiting, userName, "~"})
-		msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Hello, %s", userName))
+		msg = tgbotapi.NewMessage(ToID, fmt.Sprintf("Hello, %s", userName))
 	} else {
-		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Already exist")
+		msg = tgbotapi.NewMessage(ToID, "Already exist")
 	}
 	bot.Send(msg)
 }
@@ -258,8 +263,12 @@ func userList(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 	var msg tgbotapi.MessageConfig
 
 	//Команда только для админов
-	if FindUser(users, update.Message.Chat.ID).Status < Admin {
-		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Access denied")
+	ToID := FindID(update)
+	if ToID == 0 {
+		return
+	}
+	if FindUser(users, ToID).Status < Admin {
+		msg = tgbotapi.NewMessage(ToID, "Access denied")
 		bot.Send(msg)
 		return
 	}
@@ -271,7 +280,7 @@ func userList(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 		)
 		if err != nil {
 			msg := tgbotapi.NewMessage(
-				update.Message.Chat.ID,
+				ToID,
 				fmt.Sprintf(
 					"Error marshaling users to JSON: \n%s", err,
 				),
@@ -279,7 +288,7 @@ func userList(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 			bot.Send(msg)
 		}
 		msg = tgbotapi.NewMessage(
-			update.Message.Chat.ID, fmt.Sprintf("```json\n%s\n```", usersJSON),
+			ToID, fmt.Sprintf("```json\n%s\n```", usersJSON),
 		)
 	} else {
 		//Добавление кнопок для перехода
@@ -294,7 +303,7 @@ func userList(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 		}
 
 		msg = tgbotapi.NewMessage(
-			update.Message.Chat.ID,
+			ToID,
 			"Here are the users:",
 		)
 		ikb.InlineKeyboard = kb
@@ -305,9 +314,10 @@ func userList(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
 }
 
 func toggleDebug(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts []string) {
-	my_status := FindUser(users, update.Message.Chat.ID).Status
+	ToID := FindID(update)
+	my_status := FindUser(users, ToID).Status
 	if my_status != SU {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Access denied!")
+		msg := tgbotapi.NewMessage(ToID, "Access denied!")
 		bot.Send(msg)
 		return
 	}
@@ -317,52 +327,54 @@ func toggleDebug(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, pa
 	}
 
 	if strings.ToLower(parts[1]) == "on" {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Debug mode on!")
+		msg := tgbotapi.NewMessage(ToID, "Debug mode on!")
 		bot.Send(msg)
 		debug = true
 		return
 	}
 
 	if strings.ToLower(parts[1]) == "off" {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Debug mode off!")
+		msg := tgbotapi.NewMessage(ToID, "Debug mode off!")
 		bot.Send(msg)
 		debug = false
 		return
 	}
 
 	msg := tgbotapi.NewMessage(
-		update.Message.Chat.ID,
+		ToID,
 		fmt.Sprintf("Debug: %t \n/debug [on/off]", debug),
 	)
 	bot.Send(msg)
 }
 
 func status(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user) {
-	my_status := FindUser(users, update.Message.Chat.ID).Status
+	ToID := FindID(update)
+	my_status := FindUser(users, ToID).Status
 	msg := tgbotapi.NewMessage(
-		update.Message.Chat.ID,
+		ToID,
 		fmt.Sprintf("You're status: %s", my_status),
 	)
 	bot.Send(msg)
 }
 
 func help(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "TODO")
+	msg := tgbotapi.NewMessage(FindID(update), "TODO")
 	bot.Send(msg)
 }
 
 func nocmd(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error 404 command not found :(")
+	msg := tgbotapi.NewMessage(FindID(update), "Error 404 command not found :(")
 	bot.Send(msg)
 }
 
 // Функции событий
 func userInfo(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts []string) {
+	ToID := FindID(update)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
 		if debug {
 			msg := tgbotapi.NewMessage(
-				update.CallbackQuery.Message.Chat.ID,
+				ToID,
 				fmt.Sprintf("Callback parse ID error: \n %s", err),
 			)
 			bot.Send(msg)
@@ -371,18 +383,18 @@ func userInfo(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts
 	}
 
 	other := FindUser(users, other_id)
-	me := FindUser(users, update.CallbackQuery.From.ID)
+	me := FindUser(users, ToID)
 
 	if me.Status < Admin {
-		msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Permission denied")
+		msg := tgbotapi.NewMessage(ToID, "Permission denied")
 		bot.Send(msg)
 		return
 	}
 
 	//Текстовая информация
 	msg := tgbotapi.NewMessage(
-		update.CallbackQuery.Message.Chat.ID,
-		fmt.Sprintf("Username: %s\nStatus:%s", other.UserName, other.Status),
+		ToID,
+		fmt.Sprintf("Username: %s\nStatus: %s", other.UserName, other.Status),
 	)
 
 	//Добавление клавиш управления
@@ -398,7 +410,7 @@ func userInfo(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts
 
 	//Установить статус
 	ikbRow = tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Set status", fmt.Sprintf("set.%d", other_id)),
+		tgbotapi.NewInlineKeyboardButtonData("Set status", fmt.Sprintf("select.%d", other_id)),
 	)
 	kb = append(kb, ikbRow)
 
@@ -414,11 +426,12 @@ func userInfo(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts
 }
 
 func selectStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts []string) {
+	ToID := FindID(update)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
 		if debug {
 			msg := tgbotapi.NewMessage(
-				update.CallbackQuery.Message.Chat.ID,
+				ToID,
 				fmt.Sprintf("Callback parse ID error: \n %s", err),
 			)
 			bot.Send(msg)
@@ -427,14 +440,14 @@ func selectStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, p
 	}
 
 	other := FindUser(users, other_id)
-	me := FindUser(users, update.CallbackQuery.From.ID)
+	me := FindUser(users, ToID)
 
 	//Добавление клавиш управления
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
 	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
 
 	if me.Status < Admin {
-		msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Permission denied")
+		msg := tgbotapi.NewMessage(ToID, "Permission denied")
 		bot.Send(msg)
 		return
 	}
@@ -452,7 +465,7 @@ func selectStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, p
 	}
 
 	msg := tgbotapi.NewMessage(
-		update.Message.Chat.ID,
+		ToID,
 		fmt.Sprintf("Select %s's access level:", other.UserName),
 	)
 	ikb.InlineKeyboard = kb
@@ -461,11 +474,12 @@ func selectStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, p
 }
 
 func setStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts []string) {
+	ToID := FindID(update)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
 		if debug {
 			msg := tgbotapi.NewMessage(
-				update.CallbackQuery.Message.Chat.ID,
+				ToID,
 				fmt.Sprintf("Callback parse ID error: \n %s", err),
 			)
 			bot.Send(msg)
@@ -477,7 +491,7 @@ func setStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, part
 	if err != nil {
 		if debug {
 			msg := tgbotapi.NewMessage(
-				update.CallbackQuery.Message.Chat.ID,
+				ToID,
 				fmt.Sprintf("Callback parse ID error: \n %s", err),
 			)
 			bot.Send(msg)
@@ -485,37 +499,38 @@ func setStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, part
 		return
 	}
 
-	me := FindUser(users, update.CallbackQuery.From.ID)
+	me := FindUser(users, ToID)
 
 	if me.Status < Admin {
-		msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Permission denied")
+		msg := tgbotapi.NewMessage(ToID, "Permission denied")
 		bot.Send(msg)
 		return
 	}
 
 	name := ""
-	for _, user := range *users {
+	for i, user := range *users {
 		if user.ID == other_id {
 			name = user.UserName
-			user.Status = Access(status_id)
+			(*users)[i].Status = Access(status_id)
 			break
 		}
 	}
 
 	msg := tgbotapi.NewMessage(
-		update.CallbackQuery.Message.Chat.ID,
+		ToID,
 		fmt.Sprintf("%s now %s", name, AccessList()[status_id]),
 	)
 	bot.Send(msg)
 }
 
 func transferq(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts []string) {
-	me := FindUser(users, update.CallbackQuery.From.ID)
+	ToID := FindID(update)
+	me := FindUser(users, ToID)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
 		if debug {
 			msg := tgbotapi.NewMessage(
-				update.CallbackQuery.Message.Chat.ID,
+				ToID,
 				fmt.Sprintf("Callback parse ID error: \n %s", err),
 			)
 			bot.Send(msg)
@@ -524,7 +539,7 @@ func transferq(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, part
 	}
 
 	if me.Status != SU {
-		msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Permission denied")
+		msg := tgbotapi.NewMessage(ToID, "Permission denied")
 		bot.Send(msg)
 		return
 	}
@@ -549,7 +564,7 @@ func transferq(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, part
 	kb = append(kb, ikbRow)
 
 	msg := tgbotapi.NewMessage(
-		update.Message.Chat.ID,
+		ToID,
 		fmt.Sprintf(
 			"Do you want to transfer super user access to %s\n(You lost own access and become administator)",
 			name,
@@ -562,12 +577,13 @@ func transferq(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, part
 }
 
 func transfer(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts []string) {
-	me := FindUser(users, update.CallbackQuery.From.ID)
+	ToID := FindID(update)
+	me := FindUser(users, ToID)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
 		if debug {
 			msg := tgbotapi.NewMessage(
-				update.CallbackQuery.Message.Chat.ID,
+				ToID,
 				fmt.Sprintf("Callback parse ID error: \n %s", err),
 			)
 			bot.Send(msg)
@@ -576,7 +592,7 @@ func transfer(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts
 	}
 
 	if me.Status != SU {
-		msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Permission denied")
+		msg := tgbotapi.NewMessage(ToID, "Permission denied")
 		bot.Send(msg)
 		return
 	}
@@ -593,17 +609,17 @@ func transfer(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, parts
 
 	if new_su != "" {
 		msg := tgbotapi.NewMessage(
-			update.Message.Chat.ID,
+			ToID,
 			fmt.Sprintf("%s is SU\nNow you administrator", new_su),
 		)
 		bot.Send(msg)
 	} else {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error")
+		msg := tgbotapi.NewMessage(ToID, "Error")
 		bot.Send(msg)
 	}
 }
 
 func noevent(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error 404 callback not found :(")
+	msg := tgbotapi.NewMessage(FindID(update), "Error 404 callback not found :(")
 	bot.Send(msg)
 }
