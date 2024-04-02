@@ -20,14 +20,15 @@ type Access int
 
 const (
 	Unregistered Access = iota // EnumIndex = 0
-	Waiting                    // EnumIndex = 1
-	Member                     // EnumIndex = 2
-	Admin                      // EnumIndex = 3
-	SU                         // EnumIndex = 4
+	NoAccess                   // EnumIndex = 1
+	Waiting                    // EnumIndex = 2
+	Member                     // EnumIndex = 3
+	Admin                      // EnumIndex = 4
+	SU                         // EnumIndex = 5
 )
 
 func (w Access) String() string {
-	return [...]string{"Unregistered", "Waiting", "Member", "Admin", "SU"}[w]
+	return [...]string{"Unregistered", "NoAccess", "Waiting", "Member", "Admin", "SU"}[w]
 }
 
 func (w Access) EnumIndex() int {
@@ -35,7 +36,7 @@ func (w Access) EnumIndex() int {
 }
 
 func AccessList() []Access {
-	return []Access{0, 1, 2, 3, 4}
+	return []Access{0, 1, 2, 3, 4, 5}
 }
 
 type user struct {
@@ -96,7 +97,6 @@ func main() {
 
 	//Проверка аргументов запуска
 	args := os.Args
-	fmt.Println(args)
 	if (GetIndex(args, "-h") != -1) || (GetIndex(args, "--help") != -1) {
 		fmt.Printf("Usage: %s [arguments]\n", args[0])
 		fmt.Println("\t-h --help  | help information")
@@ -123,11 +123,11 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("Bot @%s is online", bot.Self.UserName)
+	fmt.Printf("Bot @%s is online in ", bot.Self.UserName)
 	if debug {
-		fmt.Println(" in debug mode")
+		fmt.Println("debug mode")
 	} else {
-		fmt.Println()
+		fmt.Println("standart mode")
 	}
 
 	//Устанавливаем время обновления
@@ -243,7 +243,7 @@ func main() {
 			case "transfer":
 				transfer(bot, update, &users, parts)
 			default:
-				noevent(bot, update)
+				nocmd(bot, update)
 			}
 		}
 	}
@@ -463,6 +463,10 @@ func selectStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, p
 	}
 
 	for _, v := range AccessList() {
+		if v == 0 {
+			continue
+		}
+
 		if v != SU {
 			ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(v.String(), fmt.Sprintf("set.%s.%d", parts[1], v)))
 			kb = append(kb, ikbRow)
@@ -509,8 +513,13 @@ func setStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, part
 		return
 	}
 
-	me := FindUser(users, ToID)
+	if status_id == 0 {
+		msg := tgbotapi.NewMessage(ToID, "Zero status error")
+		bot.Send(msg)
+		return
+	}
 
+	me := FindUser(users, ToID)
 	if me.Status < Admin {
 		msg := tgbotapi.NewMessage(ToID, "Permission denied")
 		bot.Send(msg)
@@ -520,6 +529,11 @@ func setStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]user, part
 	name := ""
 	for i, user := range *users {
 		if user.ID == other_id {
+			if (*users)[i].Status >= me.Status {
+				msg := tgbotapi.NewMessage(ToID, "Permission denied")
+				bot.Send(msg)
+				return
+			}
 			name = user.UserName
 			(*users)[i].Status = Access(status_id)
 			break
