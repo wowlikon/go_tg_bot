@@ -150,6 +150,12 @@ func SetStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users 
 		return
 	}
 
+	if other_id == ToID {
+		msg := tgbotapi.NewMessage(ToID, "You can't set self status")
+		bot.Send(msg)
+		return
+	}
+
 	me := u.FindUser(users, ToID)
 	if me.Status < u.Admin {
 		msg := tgbotapi.NewMessage(ToID, "Permission denied")
