@@ -1,18 +1,15 @@
-# Ignore all
+# Executable (linux)
 *
-
-# Exclude files with extension
+!*/
 !*.*
 
-TODO
+# Executable (win)
+*.exe
 
 # Configuration files
 .env
 .censitive
 
-# Golang packages files
+# Golang files
 go.mod
 go.sum
-
-# Executable (win)
-*.exe
