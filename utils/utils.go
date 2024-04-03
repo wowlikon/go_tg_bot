@@ -36,6 +36,6 @@ func USend(bot tgbotapi.BotAPI, emsg *tgbotapi.EditMessageTextConfig) {
 }
 
 func NoCmd(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	msg := tgbotapi.NewMessage(u.FindID(update), "Error 404 command not found :(")
+	msg := tgbotapi.NewMessage(u.GetID(update), "Error 404 command not found :(")
 	bot.Send(msg)
 }

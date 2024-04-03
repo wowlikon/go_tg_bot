@@ -63,7 +63,7 @@ func main() {
 	//Получаем обновления от бота
 	for update := range bot.GetUpdatesChan(upd) {
 
-		ToID := u.FindID(update)
+		ToID := u.GetID(update)
 		if ToID == 0 {
 			continue
 		}

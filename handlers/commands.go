@@ -12,7 +12,7 @@ import (
 
 func Start(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]u.User) {
 	var msg tgbotapi.MessageConfig
-	ToID := u.FindID(update)
+	ToID := u.GetID(update)
 
 	//Проверка на повторный запуск
 	userName := update.Message.From.UserName
@@ -33,7 +33,7 @@ func UserList(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *
 	var msg tgbotapi.MessageConfig
 
 	//Команда только для админов
-	ToID := u.FindID(update)
+	ToID := u.GetID(update)
 	if ToID == 0 {
 		return
 	}
@@ -84,7 +84,7 @@ func UserList(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *
 }
 
 func ToggleDebug(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.FindID(update)
+	ToID := u.GetID(update)
 	my_status := u.FindUser(users, ToID).Status
 	if my_status != u.SU {
 		msg := tgbotapi.NewMessage(ToID, "Access denied!")
@@ -118,7 +118,7 @@ func ToggleDebug(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, user
 }
 
 func Status(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]u.User) {
-	ToID := u.FindID(update)
+	ToID := u.GetID(update)
 	my_status := u.FindUser(users, ToID).Status
 	msg := tgbotapi.NewMessage(
 		ToID,
@@ -128,6 +128,6 @@ func Status(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]u.User) {
 }
 
 func Help(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	msg := tgbotapi.NewMessage(u.FindID(update), "TODO")
+	msg := tgbotapi.NewMessage(u.GetID(update), "TODO")
 	bot.Send(msg)
 }

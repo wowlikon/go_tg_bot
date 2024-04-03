@@ -31,7 +31,7 @@ func FindUser(users *[]User, id int64) User {
 	return User{id, Unregistered, "Unknown", "~", 0}
 }
 
-func FindID(update tgbotapi.Update) int64 {
+func GetID(update tgbotapi.Update) int64 {
 	if update.Message != nil {
 		return update.Message.Chat.ID
 	}

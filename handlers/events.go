@@ -10,7 +10,7 @@ import (
 )
 
 func UserInfo(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.FindID(update)
+	ToID := u.GetID(update)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
 		if *debug {
@@ -67,7 +67,7 @@ func UserInfo(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *
 }
 
 func SelectStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.FindID(update)
+	ToID := u.GetID(update)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
 		if *debug {
@@ -119,7 +119,7 @@ func SelectStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, use
 }
 
 func SetStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.FindID(update)
+	ToID := u.GetID(update)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
 		if *debug {
@@ -179,7 +179,7 @@ func SetStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users 
 }
 
 func Transferq(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.FindID(update)
+	ToID := u.GetID(update)
 	me := u.FindUser(users, ToID)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
@@ -232,7 +232,7 @@ func Transferq(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users 
 }
 
 func Transfer(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.FindID(update)
+	ToID := u.GetID(update)
 	me := u.FindUser(users, ToID)
 	other_id, err := strconv.ParseInt(parts[1], 10, 0)
 	if err != nil {
