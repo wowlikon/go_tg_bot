@@ -83,7 +83,7 @@ func FindID(update tgbotapi.Update) int64 {
 	return 0
 }
 
-func UpdOrSend(bot tgbotapi.BotAPI, emsg *tgbotapi.EditMessageTextConfig) {
+func USend(bot tgbotapi.BotAPI, emsg *tgbotapi.EditMessageTextConfig) {
 	_, err := bot.Send(*emsg)
 	if err != nil {
 		msg := tgbotapi.NewMessage(emsg.ChatID, emsg.Text)

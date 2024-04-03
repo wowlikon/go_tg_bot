@@ -4,6 +4,8 @@
 # Exclude files with extension
 !*.*
 
+TODO
+
 # Configuration files
 .env
 .censitive
