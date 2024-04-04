@@ -61,8 +61,7 @@ func USend(bot *tgbotapi.BotAPI, me *u.User, emsg *tgbotapi.EditMessageTextConfi
 		msg.ReplyMarkup = emsg.ReplyMarkup
 		sended, _ = bot.Send(msg)
 	}
-
-	(*me).EditMessage = sended.MessageID
+	me.EditMessage = sended.MessageID
 }
 
 func NoCmd(bot *tgbotapi.BotAPI, me *u.User) {
