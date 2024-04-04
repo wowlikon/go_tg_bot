@@ -4,15 +4,14 @@ type Access int
 
 const (
 	Unregistered Access = iota // EnumIndex = 0
-	NoAccess                   // EnumIndex = 1
-	Waiting                    // EnumIndex = 2
-	Member                     // EnumIndex = 3
-	Admin                      // EnumIndex = 4
-	SU                         // EnumIndex = 5
+	Waiting                    // EnumIndex = 1
+	Member                     // EnumIndex = 2
+	Admin                      // EnumIndex = 3
+	SU                         // EnumIndex = 4
 )
 
 func (w Access) String() string {
-	return [...]string{"Unregistered", "NoAccess", "Waiting", "Member", "Admin", "SU"}[w]
+	return [...]string{"Unregistered", "Waiting", "Member", "Admin", "SU"}[w]
 }
 
 func (w Access) EnumIndex() int {

@@ -5,37 +5,28 @@ import (
 	"strconv"
 
 	u "github.com/wowlikon/go_tg_bot/users"
+	t "github.com/wowlikon/go_tg_bot/utils"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func UserInfo(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.GetID(update)
-	other_id, err := strconv.ParseInt(parts[1], 10, 0)
+func UserInfo(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
-		if *debug {
-			msg := tgbotapi.NewMessage(
-				ToID,
-				fmt.Sprintf("Callback parse ID error: \n %s", err),
-			)
-			bot.Send(msg)
-		}
 		return
 	}
 
-	other := u.FindUser(users, other_id)
-	me := u.FindUser(users, ToID)
+	other := u.FindUser(users, other_id, "unknown")
 
 	if me.Status < u.Admin {
-		msg := tgbotapi.NewMessage(ToID, "Permission denied")
-		bot.Send(msg)
+		msg := t.NewUpdMsg(me, "Permission denied")
+		t.USend(bot, me, msg)
 		return
 	}
 
 	//Текстовая информация
-	msg := tgbotapi.NewMessage(
-		ToID,
-		fmt.Sprintf("Username: %s\nStatus: %s", other.UserName, other.Status),
+	msg := t.NewUpdMsg(
+		me, fmt.Sprintf("Username: %s\nStatus: %s", other.UserName, other.Status),
 	)
 
 	//Добавление клавиш управления
@@ -62,34 +53,25 @@ func UserInfo(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *
 	kb = append(kb, ikbRow)
 
 	ikb.InlineKeyboard = kb
-	msg.ReplyMarkup = ikb
-	bot.Send(msg)
+	msg.ReplyMarkup = &ikb
+	t.USend(bot, me, msg)
 }
 
-func SelectStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.GetID(update)
-	other_id, err := strconv.ParseInt(parts[1], 10, 0)
+func SelectStatus(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
-		if *debug {
-			msg := tgbotapi.NewMessage(
-				ToID,
-				fmt.Sprintf("Callback parse ID error: \n %s", err),
-			)
-			bot.Send(msg)
-		}
 		return
 	}
 
-	other := u.FindUser(users, other_id)
-	me := u.FindUser(users, ToID)
+	other := u.FindUser(users, other_id, "unknown")
 
 	//Добавление клавиш управления
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
 	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
 
 	if me.Status < u.Admin {
-		msg := tgbotapi.NewMessage(ToID, "Permission denied")
-		bot.Send(msg)
+		msg := t.NewUpdMsg(me, "Permission denied")
+		t.USend(bot, me, msg)
 		return
 	}
 
@@ -99,67 +81,50 @@ func SelectStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, use
 		}
 
 		if v != u.SU {
-			ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(v.String(), fmt.Sprintf("set.%s.%d", parts[1], v)))
+			ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(v.String(), fmt.Sprintf("set.%s.%d", (*parts)[1], v)))
 			kb = append(kb, ikbRow)
 		}
 	}
 
 	if me.Status == u.SU {
-		ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Transfer SU", fmt.Sprintf("transferq.%s", parts[1])))
+		ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Transfer SU", fmt.Sprintf("transferq.%s", (*parts)[1])))
 		kb = append(kb, ikbRow)
 	}
 
-	msg := tgbotapi.NewMessage(
-		ToID,
-		fmt.Sprintf("Select %s's access level:", other.UserName),
+	msg := t.NewUpdMsg(
+		me, fmt.Sprintf("Select %s's access level:", other.UserName),
 	)
 	ikb.InlineKeyboard = kb
-	msg.ReplyMarkup = ikb
-	bot.Send(msg)
+	msg.ReplyMarkup = &ikb
+	t.USend(bot, me, msg)
 }
 
-func SetStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.GetID(update)
-	other_id, err := strconv.ParseInt(parts[1], 10, 0)
+func SetStatus(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
-		if *debug {
-			msg := tgbotapi.NewMessage(
-				ToID,
-				fmt.Sprintf("Callback parse ID error: \n %s", err),
-			)
-			bot.Send(msg)
-		}
 		return
 	}
 
-	status_id, err := strconv.Atoi(parts[2])
+	status_id, err := strconv.Atoi((*parts)[2])
 	if err != nil {
-		if *debug {
-			msg := tgbotapi.NewMessage(
-				ToID,
-				fmt.Sprintf("Callback parse ID error: \n %s", err),
-			)
-			bot.Send(msg)
-		}
 		return
 	}
 
 	if status_id == 0 {
-		msg := tgbotapi.NewMessage(ToID, "Zero status error")
-		bot.Send(msg)
+		msg := t.NewUpdMsg(me, "Zero status error")
+		t.USend(bot, me, msg)
 		return
 	}
 
-	if other_id == ToID {
-		msg := tgbotapi.NewMessage(ToID, "You can't set self status")
-		bot.Send(msg)
+	if other_id == me.ID {
+		msg := t.NewUpdMsg(me, "You can't set self status")
+		t.USend(bot, me, msg)
 		return
 	}
 
-	me := u.FindUser(users, ToID)
 	if me.Status < u.Admin {
-		msg := tgbotapi.NewMessage(ToID, "Permission denied")
-		bot.Send(msg)
+		msg := t.NewUpdMsg(me, "Permission denied")
+		t.USend(bot, me, msg)
 		return
 	}
 
@@ -167,8 +132,8 @@ func SetStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users 
 	for i, user := range *users {
 		if user.ID == other_id {
 			if (*users)[i].Status >= me.Status {
-				msg := tgbotapi.NewMessage(ToID, "Permission denied")
-				bot.Send(msg)
+				msg := t.NewUpdMsg(me, "Permission denied")
+				t.USend(bot, me, msg)
 				return
 			}
 			name = user.UserName
@@ -177,31 +142,21 @@ func SetStatus(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users 
 		}
 	}
 
-	msg := tgbotapi.NewMessage(
-		ToID,
-		fmt.Sprintf("%s now %s", name, u.AccessList()[status_id]),
+	msg := t.NewUpdMsg(
+		me, fmt.Sprintf("%s now %s", name, u.AccessList()[status_id]),
 	)
-	bot.Send(msg)
+	t.USend(bot, me, msg)
 }
 
-func Transferq(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.GetID(update)
-	me := u.FindUser(users, ToID)
-	other_id, err := strconv.ParseInt(parts[1], 10, 0)
+func Transferq(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
-		if *debug {
-			msg := tgbotapi.NewMessage(
-				ToID,
-				fmt.Sprintf("Callback parse ID error: \n %s", err),
-			)
-			bot.Send(msg)
-		}
 		return
 	}
 
 	if me.Status != u.SU {
-		msg := tgbotapi.NewMessage(ToID, "Permission denied")
-		bot.Send(msg)
+		msg := t.NewUpdMsg(me, "Permission denied")
+		t.USend(bot, me, msg)
 		return
 	}
 
@@ -218,43 +173,33 @@ func Transferq(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users 
 		}
 	}
 
-	ikbRow = tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Yes", fmt.Sprintf("transfer.%s", parts[1])))
+	ikbRow = tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Yes", fmt.Sprintf("transfer.%s", (*parts)[1])))
 	kb = append(kb, ikbRow)
 
 	ikbRow = tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("No", "users"))
 	kb = append(kb, ikbRow)
 
-	msg := tgbotapi.NewMessage(
-		ToID,
-		fmt.Sprintf(
+	msg := t.NewUpdMsg(
+		me, fmt.Sprintf(
 			"Do you want to transfer super user access to %s\n(You lost own access and become administator)",
 			name,
 		),
 	)
 
 	ikb.InlineKeyboard = kb
-	msg.ReplyMarkup = ikb
-	bot.Send(msg)
+	msg.ReplyMarkup = &ikb
+	t.USend(bot, me, msg)
 }
 
-func Transfer(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.GetID(update)
-	me := u.FindUser(users, ToID)
-	other_id, err := strconv.ParseInt(parts[1], 10, 0)
+func Transfer(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
-		if *debug {
-			msg := tgbotapi.NewMessage(
-				ToID,
-				fmt.Sprintf("Callback parse ID error: \n %s", err),
-			)
-			bot.Send(msg)
-		}
 		return
 	}
 
 	if me.Status != u.SU {
-		msg := tgbotapi.NewMessage(ToID, "Permission denied")
-		bot.Send(msg)
+		msg := t.NewUpdMsg(me, "Permission denied")
+		t.USend(bot, me, msg)
 		return
 	}
 
@@ -269,13 +214,12 @@ func Transfer(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *
 	}
 
 	if new_su != "" {
-		msg := tgbotapi.NewMessage(
-			ToID,
-			fmt.Sprintf("%s is SU\nNow you administrator", new_su),
+		msg := t.NewUpdMsg(
+			me, fmt.Sprintf("%s is SU\nNow you administrator", new_su),
 		)
-		bot.Send(msg)
+		t.USend(bot, me, msg)
 	} else {
-		msg := tgbotapi.NewMessage(ToID, "Error")
-		bot.Send(msg)
+		msg := t.NewUpdMsg(me, "Error")
+		t.USend(bot, me, msg)
 	}
 }

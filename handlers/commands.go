@@ -1,133 +1,92 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	u "github.com/wowlikon/go_tg_bot/users"
+	t "github.com/wowlikon/go_tg_bot/utils"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func Start(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]u.User) {
-	var msg tgbotapi.MessageConfig
-	ToID := u.GetID(update)
-
-	//Проверка на повторный запуск
-	userName := update.Message.From.UserName
-	id := update.Message.From.ID
-	exist := (u.FindUser(users, id).Status != u.Unregistered)
+func Start(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User) {
+	var msg *tgbotapi.EditMessageTextConfig
 
 	//Приветствие для пользователя
-	if !exist {
-		*users = append(*users, u.User{ID: id, Status: u.Waiting, UserName: userName, Directory: "~", EditMessage: 0})
-		msg = tgbotapi.NewMessage(ToID, fmt.Sprintf("Hello, %s", userName))
+	if me.Status == u.Unregistered {
+		me = u.NewUser(me.ID, u.Waiting, me.UserName, me.Directory)
+		*users = append(*users, *me)
+		msg = t.NewUpdMsg(me, fmt.Sprintf("Hello, %s", me.UserName))
 	} else {
-		msg = tgbotapi.NewMessage(ToID, "Already exist")
+		msg = t.NewUpdMsg(me, "Already exist")
 	}
-	bot.Send(msg)
+	t.USend(bot, me, msg)
 }
 
-func UserList(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User) {
-	var msg tgbotapi.MessageConfig
+func UserList(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User) {
+	var msg *tgbotapi.EditMessageTextConfig
 
 	//Команда только для админов
-	ToID := u.GetID(update)
-	if ToID == 0 {
-		return
-	}
-	if u.FindUser(users, ToID).Status < u.Admin {
-		msg := tgbotapi.NewMessage(ToID, "Access denied")
-		bot.Send(msg)
+	if me.Status < u.Admin {
+		msg := t.NewUpdMsg(me, "Access denied")
+		t.USend(bot, me, msg)
 		return
 	}
 
-	//Вывод списка пользователей
-	if *debug {
-		usersJSON, err := json.MarshalIndent(
-			*users, "", "  ",
-		)
-		if err != nil {
-			msg := tgbotapi.NewMessage(
-				ToID,
-				fmt.Sprintf(
-					"Error marshaling users to JSON: \n%s", err,
-				),
-			)
-			bot.Send(msg)
-		}
-		msg = tgbotapi.NewMessage(
-			ToID, fmt.Sprintf("```json\n%s\n```", usersJSON),
-		)
-	} else {
-		//Добавление кнопок для перехода
-		ikb := tgbotapi.NewInlineKeyboardMarkup()
-		kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
+	//Добавление кнопок для перехода
+	ikb := tgbotapi.NewInlineKeyboardMarkup()
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
 
-		for _, user := range *users {
-			txt := fmt.Sprintf("%s (%s)", user.UserName, user.Status)
-			//ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonURL(txt, fmt.Sprintf("tg://openmessage?user_id=%d", user.ID)))
-			ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(txt, fmt.Sprintf("user.%d", user.ID)))
-			kb = append(kb, ikbRow)
-		}
-
-		msg = tgbotapi.NewMessage(
-			ToID,
-			"Here are the users:",
-		)
-		ikb.InlineKeyboard = kb
-		msg.ReplyMarkup = ikb
+	for _, user := range *users {
+		txt := fmt.Sprintf("%s (%s)", user.UserName, user.Status)
+		//ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonURL(txt, fmt.Sprintf("tg://openmessage?user_id=%d", user.ID)))
+		ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(txt, fmt.Sprintf("user.%d", user.ID)))
+		kb = append(kb, ikbRow)
 	}
+
+	msg = t.NewUpdMsg(me, "Here are the users:")
+	ikb.InlineKeyboard = kb
+	msg.ReplyMarkup = &ikb
 	msg.ParseMode = "MarkdownV2"
-	bot.Send(msg)
+	t.USend(bot, me, msg)
 }
 
-func ToggleDebug(bot *tgbotapi.BotAPI, update tgbotapi.Update, debug *bool, users *[]u.User, parts []string) {
-	ToID := u.GetID(update)
-	my_status := u.FindUser(users, ToID).Status
-	if my_status != u.SU {
-		msg := tgbotapi.NewMessage(ToID, "Access denied!")
-		bot.Send(msg)
+func ToggleDebug(bot *tgbotapi.BotAPI, debug *bool, me *u.User, parts *[]string) {
+	if me.Status != u.SU {
+		msg := t.NewUpdMsg(me, "Access denied!")
+		t.USend(bot, me, msg)
 		return
 	}
 
-	if len(parts) == 1 {
-		parts = append(parts, "")
+	if len(*parts) == 1 {
+		*parts = append(*parts, "")
 	}
 
-	if strings.ToLower(parts[1]) == "on" {
-		msg := tgbotapi.NewMessage(ToID, "Debug mode on!")
-		bot.Send(msg)
+	if strings.ToLower((*parts)[1]) == "on" {
+		msg := t.NewUpdMsg(me, "Debug mode on!")
+		t.USend(bot, me, msg)
 		*debug = true
 		return
 	}
 
-	if strings.ToLower(parts[1]) == "off" {
-		msg := tgbotapi.NewMessage(ToID, "Debug mode off!")
-		bot.Send(msg)
+	if strings.ToLower((*parts)[1]) == "off" {
+		msg := t.NewUpdMsg(me, "Debug mode off!")
+		t.USend(bot, me, msg)
 		*debug = false
 		return
 	}
 
-	msg := tgbotapi.NewMessage(
-		ToID,
-		fmt.Sprintf("Debug: %t \n/debug [on/off]", *debug),
-	)
-	bot.Send(msg)
+	msg := t.NewUpdMsg(me, fmt.Sprintf("Debug: %t \n/debug [on/off]", *debug))
+	t.USend(bot, me, msg)
 }
 
-func Status(bot *tgbotapi.BotAPI, update tgbotapi.Update, users *[]u.User) {
-	ToID := u.GetID(update)
-	my_status := u.FindUser(users, ToID).Status
-	msg := tgbotapi.NewMessage(
-		ToID,
-		fmt.Sprintf("You're status: %s", my_status),
-	)
-	bot.Send(msg)
+func Status(bot *tgbotapi.BotAPI, me *u.User) {
+	msg := t.NewUpdMsg(me, fmt.Sprintf("You're status: %s", me.Status))
+	t.USend(bot, me, msg)
 }
 
-func Help(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	msg := tgbotapi.NewMessage(u.GetID(update), "TODO")
-	bot.Send(msg)
+func Help(bot *tgbotapi.BotAPI, me *u.User) {
+	msg := t.NewUpdMsg(me, "TODO")
+	t.USend(bot, me, msg)
 }

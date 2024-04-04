@@ -63,10 +63,11 @@ func main() {
 	//Получаем обновления от бота
 	for update := range bot.GetUpdatesChan(upd) {
 
-		ToID := u.GetID(update)
+		ToID := t.GetID(update)
 		if ToID == 0 {
 			continue
 		}
+		srcUser := u.FindUser(&users, ToID, t.GetFrom(update).UserName)
 
 		//Вывод данных о сообщении
 		if debug {
@@ -99,15 +100,15 @@ func main() {
 				id := update.Message.From.ID
 				key_used = true
 				idx := -1
-				for userid, user := range users {
+				for userID, user := range users {
 					if user.ID == id {
-						idx = userid
+						idx = userID
 						break
 					}
 				}
 
 				if idx == -1 {
-					users = append(users, u.NewUser(id, u.SU, userName, "~"))
+					users = append(users, *u.NewUser(id, u.SU, userName, "~"))
 				} else {
 					users[idx].Status = u.SU
 				}
@@ -124,21 +125,21 @@ func main() {
 				parts := strings.Split(update.Message.Text, " ")
 				switch parts[0] {
 				case "/start":
-					h.Start(bot, update, &users)
+					h.Start(bot, srcUser, &users)
 				case "/users":
-					h.UserList(bot, update, &debug, &users)
+					h.UserList(bot, srcUser, &users)
 				case "/status":
-					h.Status(bot, update, &users)
+					h.Status(bot, srcUser)
 				case "/debug":
-					h.ToggleDebug(bot, update, &debug, &users, parts)
+					h.ToggleDebug(bot, &debug, srcUser, &parts)
 				case "/help":
-					h.Help(bot, update)
+					h.Help(bot, srcUser)
 				default:
-					t.NoCmd(bot, update)
+					t.NoCmd(bot, srcUser)
 				}
 			} else {
 				//Если просто текст
-				msg := tgbotapi.NewMessage(ToID, "not command TODO")
+				msg := tgbotapi.NewMessage(ToID, "Not command TODO")
 				bot.Send(msg)
 			}
 
@@ -157,19 +158,19 @@ func main() {
 			//Проверка события
 			switch parts[0] {
 			case "user":
-				h.UserInfo(bot, update, &debug, &users, parts)
+				h.UserInfo(bot, srcUser, &users, &parts)
 			case "users":
-				h.UserList(bot, update, &debug, &users)
+				h.UserList(bot, srcUser, &users)
 			case "select":
-				h.SelectStatus(bot, update, &debug, &users, parts)
+				h.SelectStatus(bot, srcUser, &users, &parts)
 			case "set":
-				h.SetStatus(bot, update, &debug, &users, parts)
+				h.SetStatus(bot, srcUser, &users, &parts)
 			case "transferq":
-				h.Transferq(bot, update, &debug, &users, parts)
+				h.Transferq(bot, srcUser, &users, &parts)
 			case "transfer":
-				h.Transfer(bot, update, &debug, &users, parts)
+				h.Transfer(bot, srcUser, &users, &parts)
 			default:
-				t.NoCmd(bot, update)
+				t.NoCmd(bot, srcUser)
 			}
 		}
 	}
