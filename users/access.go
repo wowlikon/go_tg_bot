@@ -19,5 +19,5 @@ func (w Access) EnumIndex() int {
 }
 
 func AccessList() []Access {
-	return []Access{0, 1, 2, 3, 4, 5}
+	return []Access{0, 1, 2, 3, 4}
 }

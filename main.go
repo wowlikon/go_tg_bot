@@ -139,7 +139,7 @@ func main() {
 				}
 			} else {
 				//Если просто текст
-				msg := tgbotapi.NewMessage(ToID, "Not command TODO")
+				msg := tgbotapi.NewMessage(ToID, "Not text-command TODO")
 				bot.Send(msg)
 			}
 

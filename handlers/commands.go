@@ -87,6 +87,6 @@ func Status(bot *tgbotapi.BotAPI, me *u.User) {
 }
 
 func Help(bot *tgbotapi.BotAPI, me *u.User) {
-	msg := t.NewUpdMsg(me, "TODO")
+	msg := t.NewUpdMsg(me, "To Do Later")
 	t.USend(bot, me, msg)
 }

@@ -202,14 +202,15 @@ func Transfer(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string
 		t.USend(bot, me, msg)
 		return
 	}
-
+	
 	new_su := ""
-	for _, user := range *users {
+	for i, user := range *users {
 		if user.ID == other_id {
-			new_su = me.UserName
-			me.Status = u.Admin
-			user.Status = u.SU
-			break
+			new_su = user.UserName
+			(*users)[i].Status = u.SU
+		}
+		if user.ID == me.ID{
+		  (*users)[i].Status = u.Admin
 		}
 	}
 
