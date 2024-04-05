@@ -131,7 +131,7 @@ func main() {
 				case "/status":
 					h.Status(bot, srcUser)
 				case "/debug":
-					h.ToggleDebug(bot, &debug, srcUser, &parts)
+					h.SetDebug(bot, &debug, srcUser, &parts)
 				case "/help":
 					h.Help(bot, srcUser)
 				default:
@@ -169,6 +169,8 @@ func main() {
 				h.Transferq(bot, srcUser, &users, &parts)
 			case "transfer":
 				h.Transfer(bot, srcUser, &users, &parts)
+			case "debug":
+			  h.SetDebug(bot, &debug, srcUser, &parts)
 			default:
 				t.NoCmd(bot, srcUser)
 			}

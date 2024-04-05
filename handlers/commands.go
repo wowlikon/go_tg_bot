@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"strings"
 
 	u "github.com/wowlikon/go_tg_bot/users"
 	t "github.com/wowlikon/go_tg_bot/utils"
@@ -49,35 +48,6 @@ func UserList(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User) {
 	ikb.InlineKeyboard = kb
 	msg.ReplyMarkup = &ikb
 	msg.ParseMode = "MarkdownV2"
-	t.USend(bot, me, msg)
-}
-
-func ToggleDebug(bot *tgbotapi.BotAPI, debug *bool, me *u.User, parts *[]string) {
-	if me.Status != u.SU {
-		msg := t.NewUpdMsg(me, "Access denied!")
-		t.USend(bot, me, msg)
-		return
-	}
-
-	if len(*parts) == 1 {
-		*parts = append(*parts, "")
-	}
-
-	if strings.ToLower((*parts)[1]) == "on" {
-		msg := t.NewUpdMsg(me, "Debug mode on!")
-		t.USend(bot, me, msg)
-		*debug = true
-		return
-	}
-
-	if strings.ToLower((*parts)[1]) == "off" {
-		msg := t.NewUpdMsg(me, "Debug mode off!")
-		t.USend(bot, me, msg)
-		*debug = false
-		return
-	}
-
-	msg := t.NewUpdMsg(me, fmt.Sprintf("Debug: %t \n/debug [on/off]", *debug))
 	t.USend(bot, me, msg)
 }
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"strings"
 	"strconv"
 
 	u "github.com/wowlikon/go_tg_bot/users"
@@ -67,7 +68,7 @@ func SelectStatus(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]st
 
 	//Добавление клавиш управления
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
-	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(u.AccessList()))
 
 	if me.Status < u.Admin {
 		msg := t.NewUpdMsg(me, "Permission denied")
@@ -163,7 +164,7 @@ func Transferq(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]strin
 	//Добавление клавиш управления
 	var ikbRow []tgbotapi.InlineKeyboardButton
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
-	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 2)
 
 	name := ""
 	for _, user := range *users {
@@ -223,4 +224,50 @@ func Transfer(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string
 		msg := t.NewUpdMsg(me, "Error")
 		t.USend(bot, me, msg)
 	}
+}
+
+func SetDebug(bot *tgbotapi.BotAPI, debug *bool, me *u.User, parts *[]string) {
+  var ikbRow []tgbotapi.InlineKeyboardButton
+	if me.Status != u.SU {
+		msg := t.NewUpdMsg(me, "Access denied!")
+		t.USend(bot, me, msg)
+		return
+	}
+
+	if len(*parts) == 1 {
+		*parts = append(*parts, "")
+	}
+
+	if strings.ToLower((*parts)[1]) == "on" {
+		msg := t.NewUpdMsg(me, "Debug mode on!")
+		t.USend(bot, me, msg)
+		*debug = true
+		return
+	}
+
+	if strings.ToLower((*parts)[1]) == "off" {
+		msg := t.NewUpdMsg(me, "Debug mode off!")
+		t.USend(bot, me, msg)
+		*debug = false
+		return
+	}
+
+	msg := t.NewUpdMsg(me, fmt.Sprintf("Set debug status\nNow value: %t", *debug))
+	ikb := tgbotapi.NewInlineKeyboardMarkup()
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 2)
+
+	//Установить значение
+	ikbRow = tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("ON", "debug.on"),
+	)
+	kb = append(kb, ikbRow)
+
+	ikbRow = tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("OFF", "debug.off"),
+	)
+	kb = append(kb, ikbRow)
+
+	ikb.InlineKeyboard = kb
+	msg.ReplyMarkup = &ikb
+	t.USend(bot, me, msg)
 }
