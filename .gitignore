@@ -8,6 +8,7 @@
 
 # Configuration files
 .env
+.vscode/
 .censitive
 
 # Golang files

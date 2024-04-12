@@ -7,7 +7,6 @@
     * /start
     * /help
     * /main
-    * /admin
 * Scan LAN
 * Wake On Lan
 * Shutdown
