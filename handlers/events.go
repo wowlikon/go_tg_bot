@@ -2,14 +2,42 @@ package handlers
 
 import (
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 
 	u "github.com/wowlikon/go_tg_bot/users"
 	t "github.com/wowlikon/go_tg_bot/utils"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
+
+func UserList(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User) {
+	var msg *tgbotapi.EditMessageTextConfig
+
+	//Команда только для админов
+	if me.Status < u.Admin {
+		msg := t.NewUpdMsg(me, "Access denied")
+		t.USend(bot, me, msg)
+		return
+	}
+
+	//Добавление кнопок для перехода
+	ikb := tgbotapi.NewInlineKeyboardMarkup()
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
+
+	for _, user := range *users {
+		txt := fmt.Sprintf("%s (%s)", user.UserName, user.Status)
+		//ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonURL(txt, fmt.Sprintf("tg://openmessage?user_id=%d", user.ID)))
+		ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(txt, fmt.Sprintf("user.%d", user.ID)))
+		kb = append(kb, ikbRow)
+	}
+
+	msg = t.NewUpdMsg(me, "Here are the users:")
+	ikb.InlineKeyboard = kb
+	msg.ReplyMarkup = &ikb
+	msg.ParseMode = "MarkdownV2"
+	t.USend(bot, me, msg)
+}
 
 func UserInfo(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
 	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
@@ -65,6 +93,11 @@ func SelectStatus(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]st
 	}
 
 	other := u.FindUser(users, other_id, "unknown")
+	if me.ID == other.ID {
+		msg := t.NewUpdMsg(me, "You can't set self status")
+		t.USend(bot, me, msg)
+		return
+	}
 
 	//Добавление клавиш управления
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
@@ -203,15 +236,15 @@ func Transfer(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string
 		t.USend(bot, me, msg)
 		return
 	}
-	
+
 	new_su := ""
 	for i, user := range *users {
 		if user.ID == other_id {
 			new_su = user.UserName
 			(*users)[i].Status = u.SU
 		}
-		if user.ID == me.ID{
-		  (*users)[i].Status = u.Admin
+		if user.ID == me.ID {
+			(*users)[i].Status = u.Admin
 		}
 	}
 
@@ -227,7 +260,7 @@ func Transfer(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string
 }
 
 func SetDebug(bot *tgbotapi.BotAPI, debug *bool, me *u.User, parts *[]string) {
-  var ikbRow []tgbotapi.InlineKeyboardButton
+	var ikbRow []tgbotapi.InlineKeyboardButton
 	if me.Status != u.SU {
 		msg := t.NewUpdMsg(me, "Access denied!")
 		t.USend(bot, me, msg)

@@ -23,40 +23,81 @@ func Start(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User) {
 	t.USend(bot, me, msg)
 }
 
-func UserList(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User) {
+func Status(bot *tgbotapi.BotAPI, me *u.User) {
+	msg := t.NewUpdMsg(me, fmt.Sprintf("You're status: %s", me.Status))
+	t.USend(bot, me, msg)
+}
+
+func Main(bot *tgbotapi.BotAPI, me *u.User) {
+	var ikbRow []tgbotapi.InlineKeyboardButton
 	var msg *tgbotapi.EditMessageTextConfig
 
-	//Команда только для админов
-	if me.Status < u.Admin {
-		msg := t.NewUpdMsg(me, "Access denied")
+	if me.Status <= u.Waiting {
+		msg = t.NewUpdMsg(me, "Permision demied")
 		t.USend(bot, me, msg)
 		return
 	}
 
 	//Добавление кнопок для перехода
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
-	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 4)
 
-	for _, user := range *users {
-		txt := fmt.Sprintf("%s (%s)", user.UserName, user.Status)
-		//ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonURL(txt, fmt.Sprintf("tg://openmessage?user_id=%d", user.ID)))
-		ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(txt, fmt.Sprintf("user.%d", user.ID)))
+	if me.Status >= u.Admin {
+		ikbRow = tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Users", "users"),
+		)
+	}
+	if me.Status == u.SU {
+		ikbRow = append(ikbRow,
+			tgbotapi.NewInlineKeyboardButtonData("Config", "config"),
+		)
+		kb = append(kb, ikbRow)
+
+		ikbRow = tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Termial", "terminal"),
+		)
+	}
+	kb = append(kb, ikbRow)
+
+	ikbRow = tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Files", "files"),
+	)
+	kb = append(kb, ikbRow)
+
+	ikbRow = tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Help", "Help"),
+	)
+	kb = append(kb, ikbRow)
+
+	if me.Status >= u.Admin {
+		ikbRow = tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Wake/Shutdown", "power"),
+		)
+		kb = append(kb, ikbRow)
+	} else {
+		ikbRow = tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Request Wake/Shutdown", "powerq"),
+		)
 		kb = append(kb, ikbRow)
 	}
 
-	msg = t.NewUpdMsg(me, "Here are the users:")
+	msg = t.NewUpdMsg(me, fmt.Sprintf("You're status: %s", me.Status))
 	ikb.InlineKeyboard = kb
 	msg.ReplyMarkup = &ikb
 	msg.ParseMode = "MarkdownV2"
 	t.USend(bot, me, msg)
 }
 
-func Status(bot *tgbotapi.BotAPI, me *u.User) {
-	msg := t.NewUpdMsg(me, fmt.Sprintf("You're status: %s", me.Status))
+func Help(bot *tgbotapi.BotAPI, me *u.User) {
+	var hint string
+	hint += "/start - begin using bot\n"
+	hint += "/main - command to interact with bot\n"
+	hint += "/help - get this information\n"
+	msg := t.NewUpdMsg(me, hint)
 	t.USend(bot, me, msg)
 }
 
-func Help(bot *tgbotapi.BotAPI, me *u.User) {
-	msg := t.NewUpdMsg(me, "To Do Later")
+func TODO(bot *tgbotapi.BotAPI, me *u.User) {
+	msg := t.NewUpdMsg(me, "TODO")
 	t.USend(bot, me, msg)
 }

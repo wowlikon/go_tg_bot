@@ -70,7 +70,7 @@ func main() {
 		srcUser := u.FindUser(&users, ToID, t.GetFrom(update).UserName)
 
 		//Вывод данных о сообщении
-		if debug {
+		if debug && (srcUser.Status == u.SU) {
 			updateJSON, err := json.MarshalIndent(
 				update, "", "  ",
 			)
@@ -126,12 +126,10 @@ func main() {
 				switch parts[0] {
 				case "/start":
 					h.Start(bot, srcUser, &users)
-				case "/users":
-					h.UserList(bot, srcUser, &users)
 				case "/status":
 					h.Status(bot, srcUser)
-				case "/debug":
-					h.SetDebug(bot, &debug, srcUser, &parts)
+				case "/main":
+					h.Main(bot, srcUser)
 				case "/help":
 					h.Help(bot, srcUser)
 				default:
@@ -169,8 +167,14 @@ func main() {
 				h.Transferq(bot, srcUser, &users, &parts)
 			case "transfer":
 				h.Transfer(bot, srcUser, &users, &parts)
+			case "config":
+				h.SetDebug(bot, &debug, srcUser, &parts) //TODO Config
+			case "terminal", "files", "power", "powerq":
+				h.TODO(bot, srcUser)
+			case "help":
+				h.Help(bot, srcUser)
 			case "debug":
-			  h.SetDebug(bot, &debug, srcUser, &parts)
+				h.SetDebug(bot, &debug, srcUser, &parts)
 			default:
 				t.NoCmd(bot, srcUser)
 			}
