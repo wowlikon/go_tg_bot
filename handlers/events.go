@@ -11,57 +11,58 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func UserList(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User) {
+func UserList(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	var msg *tgbotapi.EditMessageTextConfig
+	me := u.GetUser(us)
 
 	//Команда только для админов
 	if me.Status < u.Admin {
-		msg := t.NewUpdMsg(me, "Access denied")
-		t.USend(bot, me, msg)
+		msg := t.NewUpdMsg(us, "Access denied")
+		t.USend(bot, us, msg)
 		return
 	}
 
 	//Добавление кнопок для перехода
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
-	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*us.Users))
 
-	for _, user := range *users {
+	for _, user := range *(us.Users) {
 		txt := fmt.Sprintf("%s (%s)", user.UserName, user.Status)
 		//ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonURL(txt, fmt.Sprintf("tg://openmessage?user_id=%d", user.ID)))
 		ikbRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(txt, fmt.Sprintf("user.%d", user.ID)))
 		kb = append(kb, ikbRow)
 	}
 
-	msg = t.NewUpdMsg(me, "Here are the users:")
+	msg = t.NewUpdMsg(us, "Here are the users:")
 	ikb.InlineKeyboard = kb
 	msg.ReplyMarkup = &ikb
 	msg.ParseMode = "MarkdownV2"
-	t.USend(bot, me, msg)
+	t.USend(bot, us, msg)
 }
 
-func UserInfo(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+func UserInfo(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
+	me := u.GetUser(us)
 	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
 		return
 	}
 
-	other := u.FindUser(users, other_id, "unknown")
+	other := u.FindUser(us.Users, other_id, "unknown")
 
 	if me.Status < u.Admin {
-		msg := t.NewUpdMsg(me, "Permission denied")
-		t.USend(bot, me, msg)
+		t.NoPermission(bot, us)
 		return
 	}
 
 	//Текстовая информация
 	msg := t.NewUpdMsg(
-		me, fmt.Sprintf("Username: %s\nStatus: %s", other.UserName, other.Status),
+		us, fmt.Sprintf("Username: %s\nStatus: %s", u.GetUser(other).UserName, u.GetUser(other).Status),
 	)
 
 	//Добавление клавиш управления
 	var ikbRow []tgbotapi.InlineKeyboardButton
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
-	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*users))
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*us.Users))
 
 	//Перейти в профиль
 	ikbRow = tgbotapi.NewInlineKeyboardRow(
@@ -83,19 +84,20 @@ func UserInfo(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string
 
 	ikb.InlineKeyboard = kb
 	msg.ReplyMarkup = &ikb
-	t.USend(bot, me, msg)
+	t.USend(bot, us, msg)
 }
 
-func SelectStatus(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+func SelectStatus(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
+	me := u.GetUser(us)
 	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
 		return
 	}
 
-	other := u.FindUser(users, other_id, "unknown")
+	other := u.FindUser(us.Users, other_id, "unknown")
 	if me.ID == other.ID {
-		msg := t.NewUpdMsg(me, "You can't set self status")
-		t.USend(bot, me, msg)
+		msg := t.NewUpdMsg(us, "You can't set self status")
+		t.USend(bot, us, msg)
 		return
 	}
 
@@ -104,8 +106,7 @@ func SelectStatus(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]st
 	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(u.AccessList()))
 
 	if me.Status < u.Admin {
-		msg := t.NewUpdMsg(me, "Permission denied")
-		t.USend(bot, me, msg)
+		t.NoPermission(bot, us)
 		return
 	}
 
@@ -126,14 +127,15 @@ func SelectStatus(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]st
 	}
 
 	msg := t.NewUpdMsg(
-		me, fmt.Sprintf("Select %s's access level:", other.UserName),
+		us, fmt.Sprintf("Select %s's access level:", other.UserName),
 	)
 	ikb.InlineKeyboard = kb
 	msg.ReplyMarkup = &ikb
-	t.USend(bot, me, msg)
+	t.USend(bot, us, msg)
 }
 
-func SetStatus(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+func SetStatus(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
+	me := u.GetUser(us)
 	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
 		return
@@ -145,52 +147,50 @@ func SetStatus(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]strin
 	}
 
 	if status_id == 0 {
-		msg := t.NewUpdMsg(me, "Zero status error")
-		t.USend(bot, me, msg)
+		msg := t.NewUpdMsg(us, "Zero status error")
+		t.USend(bot, us, msg)
 		return
 	}
 
 	if other_id == me.ID {
-		msg := t.NewUpdMsg(me, "You can't set self status")
-		t.USend(bot, me, msg)
+		msg := t.NewUpdMsg(us, "You can't set self status")
+		t.USend(bot, us, msg)
 		return
 	}
 
 	if me.Status < u.Admin {
-		msg := t.NewUpdMsg(me, "Permission denied")
-		t.USend(bot, me, msg)
+		t.NoPermission(bot, us)
 		return
 	}
 
 	name := ""
-	for i, user := range *users {
+	for i, user := range *us.Users {
 		if user.ID == other_id {
-			if (*users)[i].Status >= me.Status {
-				msg := t.NewUpdMsg(me, "Permission denied")
-				t.USend(bot, me, msg)
+			if (*us.Users)[i].Status >= me.Status {
+				t.NoPermission(bot, us)
 				return
 			}
 			name = user.UserName
-			(*users)[i].Status = u.Access(status_id)
+			(*us.Users)[i].Status = u.Access(status_id)
 			break
 		}
 	}
 
 	msg := t.NewUpdMsg(
-		me, fmt.Sprintf("%s now %s", name, u.AccessList()[status_id]),
+		us, fmt.Sprintf("%s now %s", name, u.AccessList()[status_id]),
 	)
-	t.USend(bot, me, msg)
+	t.USend(bot, us, msg)
 }
 
-func Transferq(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+func Transferq(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
+	me := u.GetUser(us)
 	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
 		return
 	}
 
 	if me.Status != u.SU {
-		msg := t.NewUpdMsg(me, "Permission denied")
-		t.USend(bot, me, msg)
+		t.NoPermission(bot, us)
 		return
 	}
 
@@ -200,7 +200,7 @@ func Transferq(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]strin
 	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 2)
 
 	name := ""
-	for _, user := range *users {
+	for _, user := range *us.Users {
 		if user.ID == other_id {
 			name = user.UserName
 			break
@@ -214,7 +214,7 @@ func Transferq(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]strin
 	kb = append(kb, ikbRow)
 
 	msg := t.NewUpdMsg(
-		me, fmt.Sprintf(
+		us, fmt.Sprintf(
 			"Do you want to transfer super user access to %s\n(You lost own access and become administator)",
 			name,
 		),
@@ -222,48 +222,49 @@ func Transferq(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]strin
 
 	ikb.InlineKeyboard = kb
 	msg.ReplyMarkup = &ikb
-	t.USend(bot, me, msg)
+	t.USend(bot, us, msg)
 }
 
-func Transfer(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User, parts *[]string) {
+func Transfer(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
+	me := u.GetUser(us)
 	other_id, err := strconv.ParseInt((*parts)[1], 10, 0)
 	if err != nil {
 		return
 	}
 
 	if me.Status != u.SU {
-		msg := t.NewUpdMsg(me, "Permission denied")
-		t.USend(bot, me, msg)
+		t.NoPermission(bot, us)
 		return
 	}
 
 	new_su := ""
-	for i, user := range *users {
+	for i, user := range *us.Users {
 		if user.ID == other_id {
 			new_su = user.UserName
-			(*users)[i].Status = u.SU
+			(*us.Users)[i].Status = u.SU
 		}
 		if user.ID == me.ID {
-			(*users)[i].Status = u.Admin
+			(*us.Users)[i].Status = u.Admin
 		}
 	}
 
 	if new_su != "" {
 		msg := t.NewUpdMsg(
-			me, fmt.Sprintf("%s is SU\nNow you administrator", new_su),
+			us, fmt.Sprintf("%s is SU\nNow you administrator", new_su),
 		)
-		t.USend(bot, me, msg)
+		t.USend(bot, us, msg)
 	} else {
-		msg := t.NewUpdMsg(me, "Error")
-		t.USend(bot, me, msg)
+		msg := t.NewUpdMsg(us, "Error")
+		t.USend(bot, us, msg)
 	}
 }
 
-func SetDebug(bot *tgbotapi.BotAPI, debug *bool, me *u.User, parts *[]string) {
+func SetDebug(bot *tgbotapi.BotAPI, debug *bool, us u.SelectedUser, parts *[]string) {
 	var ikbRow []tgbotapi.InlineKeyboardButton
+	me := u.GetUser(us)
+
 	if me.Status != u.SU {
-		msg := t.NewUpdMsg(me, "Access denied!")
-		t.USend(bot, me, msg)
+		t.NoPermission(bot, us)
 		return
 	}
 
@@ -272,20 +273,20 @@ func SetDebug(bot *tgbotapi.BotAPI, debug *bool, me *u.User, parts *[]string) {
 	}
 
 	if strings.ToLower((*parts)[1]) == "on" {
-		msg := t.NewUpdMsg(me, "Debug mode on!")
-		t.USend(bot, me, msg)
+		msg := t.NewUpdMsg(us, "Debug mode on!")
+		t.USend(bot, us, msg)
 		*debug = true
 		return
 	}
 
 	if strings.ToLower((*parts)[1]) == "off" {
-		msg := t.NewUpdMsg(me, "Debug mode off!")
-		t.USend(bot, me, msg)
+		msg := t.NewUpdMsg(us, "Debug mode off!")
+		t.USend(bot, us, msg)
 		*debug = false
 		return
 	}
 
-	msg := t.NewUpdMsg(me, fmt.Sprintf("Set debug status\nNow value: %t", *debug))
+	msg := t.NewUpdMsg(us, fmt.Sprintf("Set debug status\nNow value: %t", *debug))
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
 	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 2)
 
@@ -302,5 +303,5 @@ func SetDebug(bot *tgbotapi.BotAPI, debug *bool, me *u.User, parts *[]string) {
 
 	ikb.InlineKeyboard = kb
 	msg.ReplyMarkup = &ikb
-	t.USend(bot, me, msg)
+	t.USend(bot, us, msg)
 }

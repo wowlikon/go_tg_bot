@@ -9,32 +9,35 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func Start(bot *tgbotapi.BotAPI, me *u.User, users *[]u.User) {
+func Start(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	var msg *tgbotapi.EditMessageTextConfig
+	me := u.GetUser(us)
 
 	//Приветствие для пользователя
 	if me.Status == u.Unregistered {
 		me = u.NewUser(me.ID, u.Waiting, me.UserName, me.Directory)
-		*users = append(*users, *me)
-		msg = t.NewUpdMsg(me, fmt.Sprintf("Hello, %s", me.UserName))
+		*us.Users = append(*us.Users, *me)
+		msg = t.NewUpdMsg(us, fmt.Sprintf("Hello, %s", me.UserName))
 	} else {
-		msg = t.NewUpdMsg(me, "Already exist")
+		msg = t.NewUpdMsg(us, "Already exist")
 	}
-	t.USend(bot, me, msg)
+	t.USend(bot, us, msg)
 }
 
-func Status(bot *tgbotapi.BotAPI, me *u.User) {
-	msg := t.NewUpdMsg(me, fmt.Sprintf("You're status: %s", me.Status))
-	t.USend(bot, me, msg)
+func Status(bot *tgbotapi.BotAPI, us u.SelectedUser) {
+	me := u.GetUser(us)
+
+	msg := t.NewUpdMsg(us, fmt.Sprintf("You're status: %s", me.Status))
+	t.USend(bot, us, msg)
 }
 
-func Main(bot *tgbotapi.BotAPI, me *u.User) {
+func Main(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	var ikbRow []tgbotapi.InlineKeyboardButton
 	var msg *tgbotapi.EditMessageTextConfig
+	me := u.GetUser(us)
 
 	if me.Status <= u.Waiting {
-		msg = t.NewUpdMsg(me, "Permision demied")
-		t.USend(bot, me, msg)
+		t.NoPermission(bot, us)
 		return
 	}
 
@@ -81,23 +84,23 @@ func Main(bot *tgbotapi.BotAPI, me *u.User) {
 		kb = append(kb, ikbRow)
 	}
 
-	msg = t.NewUpdMsg(me, fmt.Sprintf("You're status: %s", me.Status))
+	msg = t.NewUpdMsg(us, fmt.Sprintf("You're status: %s", me.Status))
 	ikb.InlineKeyboard = kb
 	msg.ReplyMarkup = &ikb
 	msg.ParseMode = "MarkdownV2"
-	t.USend(bot, me, msg)
+	t.USend(bot, us, msg)
 }
 
-func Help(bot *tgbotapi.BotAPI, me *u.User) {
+func Help(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	var hint string
 	hint += "/start - begin using bot\n"
 	hint += "/main - command to interact with bot\n"
 	hint += "/help - get this information\n"
-	msg := t.NewUpdMsg(me, hint)
-	t.USend(bot, me, msg)
+	msg := t.NewUpdMsg(us, hint)
+	t.USend(bot, us, msg)
 }
 
-func TODO(bot *tgbotapi.BotAPI, me *u.User) {
-	msg := t.NewUpdMsg(me, "TODO")
-	t.USend(bot, me, msg)
+func TODO(bot *tgbotapi.BotAPI, us u.SelectedUser) {
+	msg := t.NewUpdMsg(us, "TODO")
+	t.USend(bot, us, msg)
 }

@@ -8,6 +8,13 @@ type User struct {
 	EditMessage int    `json:"edit_msg"`
 }
 
+type SelectedUser struct {
+	ID       int64   `json:"id"`
+	Index    int     `json:"index"`
+	UserName string  `json:"name"`
+	Users    *[]User `json:"users"`
+}
+
 func NewUser(id int64, status Access, name, directory string) *User {
 	return &User{
 		ID:          id,
@@ -28,11 +35,18 @@ func NoUser(id int64, userName string) *User {
 	}
 }
 
-func FindUser(users *[]User, id int64, name string) *User {
-	for _, user := range *users {
+func FindUser(users *[]User, id int64, name string) SelectedUser {
+	for idx, user := range *users {
 		if user.ID == id {
-			return &user
+			return SelectedUser{id, idx, name, users}
 		}
 	}
-	return NoUser(id, name)
+	return SelectedUser{id, -1, name, users}
+}
+
+func GetUser(elem SelectedUser) *User {
+	if elem.Index == -1 {
+		return NoUser(elem.ID, elem.UserName)
+	}
+	return &((*elem.Users)[elem.Index])
 }

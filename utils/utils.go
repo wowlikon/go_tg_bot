@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 
 	u "github.com/wowlikon/go_tg_bot/users"
 
@@ -46,25 +47,37 @@ func GetFrom(update tgbotapi.Update) *tgbotapi.User {
 	return nil
 }
 
-func NewUpdMsg(me *u.User, text string) *tgbotapi.EditMessageTextConfig {
-	umsg := tgbotapi.NewEditMessageText(me.ID, me.EditMessage, text)
+func NewUpdMsg(us u.SelectedUser, text string) *tgbotapi.EditMessageTextConfig {
+	me := u.GetUser(us)
+	umsg := tgbotapi.NewEditMessageText(
+		me.ID, me.EditMessage, text,
+	)
 	return &umsg
 }
 
-func USend(bot *tgbotapi.BotAPI, me *u.User, emsg *tgbotapi.EditMessageTextConfig) {
+func USend(bot *tgbotapi.BotAPI, us u.SelectedUser, emsg *tgbotapi.EditMessageTextConfig) {
 	var sended tgbotapi.Message
 	var err error
 
 	sended, err = bot.Send(*emsg)
 	if err != nil {
+		fmt.Println(err, u.GetUser(us).EditMessage)
 		msg := tgbotapi.NewMessage(emsg.ChatID, emsg.Text)
 		msg.ReplyMarkup = emsg.ReplyMarkup
 		sended, _ = bot.Send(msg)
 	}
-	me.EditMessage = sended.MessageID
+	if us.Index == -1 {
+		return
+	}
+	(*us.Users)[us.Index].EditMessage = sended.MessageID
 }
 
-func NoCmd(bot *tgbotapi.BotAPI, me *u.User) {
-	msg := NewUpdMsg(me, "Error 404 command not found :(")
-	USend(bot, me, msg)
+func NoCmd(bot *tgbotapi.BotAPI, us u.SelectedUser) {
+	msg := NewUpdMsg(us, "Error 404 command not found :(")
+	USend(bot, us, msg)
+}
+
+func NoPermission(bot *tgbotapi.BotAPI, us u.SelectedUser) {
+	msg := NewUpdMsg(us, "Permission denied :(")
+	USend(bot, us, msg)
 }

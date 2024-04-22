@@ -70,7 +70,7 @@ func main() {
 		srcUser := u.FindUser(&users, ToID, t.GetFrom(update).UserName)
 
 		//Вывод данных о сообщении
-		if debug && (srcUser.Status == u.SU) {
+		if debug && (u.GetUser(srcUser).Status == u.SU) {
 			updateJSON, err := json.MarshalIndent(
 				update, "", "  ",
 			)
@@ -125,7 +125,7 @@ func main() {
 				parts := strings.Split(update.Message.Text, " ")
 				switch parts[0] {
 				case "/start":
-					h.Start(bot, srcUser, &users)
+					h.Start(bot, srcUser)
 				case "/status":
 					h.Status(bot, srcUser)
 				case "/main":
@@ -156,17 +156,17 @@ func main() {
 			//Проверка события
 			switch parts[0] {
 			case "user":
-				h.UserInfo(bot, srcUser, &users, &parts)
+				h.UserInfo(bot, srcUser, &parts)
 			case "users":
-				h.UserList(bot, srcUser, &users)
+				h.UserList(bot, srcUser)
 			case "select":
-				h.SelectStatus(bot, srcUser, &users, &parts)
+				h.SelectStatus(bot, srcUser, &parts)
 			case "set":
-				h.SetStatus(bot, srcUser, &users, &parts)
+				h.SetStatus(bot, srcUser, &parts)
 			case "transferq":
-				h.Transferq(bot, srcUser, &users, &parts)
+				h.Transferq(bot, srcUser, &parts)
 			case "transfer":
-				h.Transfer(bot, srcUser, &users, &parts)
+				h.Transfer(bot, srcUser, &parts)
 			case "config":
 				h.SetDebug(bot, &debug, srcUser, &parts) //TODO Config
 			case "terminal", "files", "power", "powerq":
