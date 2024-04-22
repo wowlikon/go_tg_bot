@@ -50,7 +50,7 @@ func UserInfo(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
 	other := u.FindUser(us.Users, other_id, "unknown")
 
 	if me.Status < u.Admin {
-		t.NoPermission(bot, us)
+		NoPermission(bot, us)
 		return
 	}
 
@@ -106,7 +106,7 @@ func SelectStatus(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
 	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(u.AccessList()))
 
 	if me.Status < u.Admin {
-		t.NoPermission(bot, us)
+		NoPermission(bot, us)
 		return
 	}
 
@@ -159,7 +159,7 @@ func SetStatus(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
 	}
 
 	if me.Status < u.Admin {
-		t.NoPermission(bot, us)
+		NoPermission(bot, us)
 		return
 	}
 
@@ -167,7 +167,7 @@ func SetStatus(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
 	for i, user := range *us.Users {
 		if user.ID == other_id {
 			if (*us.Users)[i].Status >= me.Status {
-				t.NoPermission(bot, us)
+				NoPermission(bot, us)
 				return
 			}
 			name = user.UserName
@@ -190,7 +190,7 @@ func Transferq(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
 	}
 
 	if me.Status != u.SU {
-		t.NoPermission(bot, us)
+		NoPermission(bot, us)
 		return
 	}
 
@@ -233,7 +233,7 @@ func Transfer(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
 	}
 
 	if me.Status != u.SU {
-		t.NoPermission(bot, us)
+		NoPermission(bot, us)
 		return
 	}
 
@@ -264,7 +264,7 @@ func SetDebug(bot *tgbotapi.BotAPI, debug *bool, us u.SelectedUser, parts *[]str
 	me := u.GetUser(us)
 
 	if me.Status != u.SU {
-		t.NoPermission(bot, us)
+		NoPermission(bot, us)
 		return
 	}
 

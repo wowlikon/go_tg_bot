@@ -10,6 +10,8 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+const ignore = "Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message"
+
 func GenerateKey(n int) (string, error) {
 	bytes := make([]byte, n)
 	if _, err := rand.Read(bytes); err != nil {
@@ -56,28 +58,25 @@ func NewUpdMsg(us u.SelectedUser, text string) *tgbotapi.EditMessageTextConfig {
 }
 
 func USend(bot *tgbotapi.BotAPI, us u.SelectedUser, emsg *tgbotapi.EditMessageTextConfig) {
-	var sended tgbotapi.Message
+	var msgID int
 	var err error
 
-	sended, err = bot.Send(*emsg)
+	msgID = u.GetUser(us).EditMessage
+	_, err = bot.Send(*emsg)
+
 	if err != nil {
-		fmt.Println(err, u.GetUser(us).EditMessage)
-		msg := tgbotapi.NewMessage(emsg.ChatID, emsg.Text)
-		msg.ReplyMarkup = emsg.ReplyMarkup
-		sended, _ = bot.Send(msg)
+		if err.Error() != ignore {
+			fmt.Println(err, msgID)
+			msg := tgbotapi.NewMessage(emsg.ChatID, emsg.Text)
+			msg.ReplyMarkup = emsg.ReplyMarkup
+			sended, _ := bot.Send(msg)
+			msgID = sended.MessageID
+		}
 	}
+
 	if us.Index == -1 {
 		return
 	}
-	(*us.Users)[us.Index].EditMessage = sended.MessageID
-}
 
-func NoCmd(bot *tgbotapi.BotAPI, us u.SelectedUser) {
-	msg := NewUpdMsg(us, "Error 404 command not found :(")
-	USend(bot, us, msg)
-}
-
-func NoPermission(bot *tgbotapi.BotAPI, us u.SelectedUser) {
-	msg := NewUpdMsg(us, "Permission denied :(")
-	USend(bot, us, msg)
+	(*us.Users)[us.Index].EditMessage = msgID
 }

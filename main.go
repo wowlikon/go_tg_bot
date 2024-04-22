@@ -46,7 +46,7 @@ func main() {
 	fmt.Println("Starting bot")
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
 	if err != nil {
-		panic(err)
+		log.Fatalf("Some error occured. Err: %s", err)
 	}
 
 	fmt.Printf("Bot @%s is online in ", bot.Self.UserName)
@@ -69,7 +69,7 @@ func main() {
 		}
 		srcUser := u.FindUser(&users, ToID, t.GetFrom(update).UserName)
 
-		//Вывод данных о сообщении
+		//Вывод данных о сообщении только для владельца
 		if debug && (u.GetUser(srcUser).Status == u.SU) {
 			updateJSON, err := json.MarshalIndent(
 				update, "", "  ",
@@ -133,7 +133,7 @@ func main() {
 				case "/help":
 					h.Help(bot, srcUser)
 				default:
-					t.NoCmd(bot, srcUser)
+					h.NoCmd(bot, srcUser)
 				}
 			} else {
 				//Если просто текст
@@ -145,7 +145,10 @@ func main() {
 		} else if update.CallbackQuery != nil {
 			callback := tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)
 			parts := strings.Split(update.CallbackQuery.Data, ".")
-			if _, err := bot.Request(callback); err != nil {
+
+			//Вывод данных об ошибке только для владельца
+			_, err := bot.Request(callback)
+			if debug && (err != nil) && (u.GetUser(srcUser).Status == u.SU) {
 				msg := tgbotapi.NewMessage(
 					ToID, fmt.Sprintf("Callback error: \n%s", err),
 				)
@@ -176,7 +179,7 @@ func main() {
 			case "debug":
 				h.SetDebug(bot, &debug, srcUser, &parts)
 			default:
-				t.NoCmd(bot, srcUser)
+				h.NoCmd(bot, srcUser)
 			}
 		}
 	}

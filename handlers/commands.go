@@ -9,6 +9,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+// Команда начала взаимодействия
 func Start(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	var msg *tgbotapi.EditMessageTextConfig
 	me := u.GetUser(us)
@@ -24,6 +25,7 @@ func Start(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	t.USend(bot, us, msg)
 }
 
+// Вывести статус пользователя
 func Status(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	me := u.GetUser(us)
 
@@ -31,13 +33,14 @@ func Status(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	t.USend(bot, us, msg)
 }
 
+// Основная команда бота
 func Main(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	var ikbRow []tgbotapi.InlineKeyboardButton
 	var msg *tgbotapi.EditMessageTextConfig
 	me := u.GetUser(us)
 
 	if me.Status <= u.Waiting {
-		t.NoPermission(bot, us)
+		NoPermission(bot, us)
 		return
 	}
 
@@ -91,6 +94,7 @@ func Main(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	t.USend(bot, us, msg)
 }
 
+// Команда для вывода подсказок
 func Help(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	var hint string
 	hint += "/start - begin using bot\n"
@@ -100,7 +104,20 @@ func Help(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	t.USend(bot, us, msg)
 }
 
+// Если функция не доделана
 func TODO(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	msg := t.NewUpdMsg(us, "TODO")
+	t.USend(bot, us, msg)
+}
+
+// Если команда не найдена
+func NoCmd(bot *tgbotapi.BotAPI, us u.SelectedUser) {
+	msg := t.NewUpdMsg(us, "Error 404 command not found :(")
+	t.USend(bot, us, msg)
+}
+
+// Если недостаточно прав
+func NoPermission(bot *tgbotapi.BotAPI, us u.SelectedUser) {
+	msg := t.NewUpdMsg(us, "Permission denied :(")
 	t.USend(bot, us, msg)
 }
