@@ -49,6 +49,15 @@ func FindUser(users *[]User, id int64, name string) SelectedUser {
 	return SelectedUser{id, -1, name, users}
 }
 
+func FindSU(users *[]User) SelectedUser{
+	for idx, user := range *users {
+		if user.Status == SU {
+			return SelectedUser{user.ID, idx, user.UserName, users}
+		}
+	}
+	return SelectedUser{-1, -1, "Unknown", users}
+}
+
 //Получить пользователя из ссылки
 func GetUser(elem SelectedUser) *User {
 	if elem.Index == -1 {

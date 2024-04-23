@@ -46,7 +46,7 @@ func Main(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 
 	//Добавление кнопок для перехода
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
-	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 4)
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 5)
 
 	if me.Status >= u.Admin {
 		ikbRow = tgbotapi.NewInlineKeyboardRow(
