@@ -60,7 +60,7 @@ func Main(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 		kb = append(kb, ikbRow)
 
 		ikbRow = tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Termial", "terminal"),
+			tgbotapi.NewInlineKeyboardButtonData("Terminal", "terminal"),
 		)
 	}
 	kb = append(kb, ikbRow)
