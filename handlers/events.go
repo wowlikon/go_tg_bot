@@ -62,7 +62,7 @@ func UserInfo(bot *tgbotapi.BotAPI, us u.SelectedUser, parts *[]string) {
 	//Добавление клавиш управления
 	var ikbRow []tgbotapi.InlineKeyboardButton
 	ikb := tgbotapi.NewInlineKeyboardMarkup()
-	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(*us.Users))
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 3)
 
 	//Перейти в профиль
 	ikbRow = tgbotapi.NewInlineKeyboardRow(
@@ -317,15 +317,15 @@ func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser){
 	t.USend(bot, us, msg)
 
 	//Сообщение для владельца
-	msg = t.NewUpdMsg(owner, fmt.Sprintf("User %s trying to power", me.UserName))
-        ikb := tgbotapi.NewInlineKeyboardMarkup()
-        kb := make([][]tgbotapi.InlineKeyboardButton, 0, 2)
-	
-	ikbRow = tgbotapi.NewInlineKeyboardRow(
+	ikb := tgbotapi.NewInlineKeyboardMarkup()
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 1)
+	ikbRow := tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("Power", "power"),
 	)
 	kb = append(kb, ikbRow)
+	msg = t.NewUpdMsg(owner, fmt.Sprintf("User %s trying to power", me.UserName))
 	ikb.InlineKeyboard = kb
-        msg.ReplyMarkup = &ikb
+	msg.ReplyMarkup = &ikb
+
         t.USend(bot, owner, msg)
 }
