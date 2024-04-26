@@ -307,7 +307,6 @@ func SetDebug(bot *tgbotapi.BotAPI, debug *bool, us u.SelectedUser, parts *[]str
 }
 
 func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser){
-	var ikbRow []tgbotapi.InlineKeyboardButton
 	var msg *tgbotapi.EditMessageTextConfig
 	owner := u.FindSU(us.Users)
 	me := u.GetUser(us)

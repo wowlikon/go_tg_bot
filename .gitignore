@@ -10,7 +10,3 @@
 .env
 .vscode/
 .censitive
-
-# Golang files
-go.mod
-go.sum

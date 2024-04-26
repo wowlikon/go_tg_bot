@@ -16,4 +16,5 @@
 * Send File
 * Create/Delete File/Directory
 * Rename File/Directory
+* Lua plugin support (https://github.com/alaingilbert/go-plugin)
 * SSH throw TG
