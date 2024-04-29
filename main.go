@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	n "github.com/wowlikon/go_lan_scanner/lib"
 	h "github.com/wowlikon/go_tg_bot/handlers"
 	u "github.com/wowlikon/go_tg_bot/users"
 	t "github.com/wowlikon/go_tg_bot/utils"
@@ -16,7 +17,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// var debug, key_used bool
 var conf t.Configuration
 
 func main() {
@@ -58,6 +58,9 @@ func main() {
 		fmt.Println("standart mode")
 	}
 
+	//Сконирование локальной сети
+	conf.Devices, _ = n.Scan("192.168.0.0/24", n.PortList)
+
 	//Устанавливаем время обновления
 	upd := tgbotapi.NewUpdate(0)
 	upd.Timeout = 60
@@ -97,10 +100,10 @@ func main() {
 			var msg tgbotapi.MessageConfig
 
 			//Проверка на одноразовый ключ доступа
-			if (update.Message.Text == key) && !conf.KeyUsed {
+			if conf.UseKey(update.Message.Text) {
 				userName := update.Message.From.UserName
 				id := update.Message.From.ID
-				conf.UseKey()
+
 				idx := -1
 				for userID, user := range users {
 					if user.ID == id {
@@ -171,7 +174,13 @@ func main() {
 			case "transfer":
 				h.Transfer(bot, srcUser, &parts)
 			case "config":
-				h.SetDebug(bot, &conf.Debug, srcUser, &parts) //TODO Config
+				h.Config(bot, srcUser)
+			case "scan":
+				h.ScanList(bot, srcUser, conf)
+			case "rescan":
+				h.Rescan(bot, srcUser, conf)
+			case "device":
+				h.SetDevice(bot, srcUser, conf, &parts)
 			case "power", "powerq":
 				h.RequestPower(bot, srcUser)
 			case "terminal", "files":

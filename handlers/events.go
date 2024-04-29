@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	n "github.com/wowlikon/go_lan_scanner/lib"
 	u "github.com/wowlikon/go_tg_bot/users"
 	t "github.com/wowlikon/go_tg_bot/utils"
 
@@ -324,4 +325,91 @@ func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	)
 	msg.ReplyMarkup = &kb
 	t.USend(bot, owner, msg)
+}
+
+func Config(bot *tgbotapi.BotAPI, us u.SelectedUser) {
+	var ikbRow []tgbotapi.InlineKeyboardButton
+	me := u.GetUser(us)
+
+	if me.Status != u.SU {
+		NoPermission(bot, us)
+		return
+	}
+
+	msg := t.NewUpdMsg(us, "Here you can configure this bot")
+	ikb := tgbotapi.NewInlineKeyboardMarkup()
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, 2)
+
+	//Установить значение
+	ikbRow = tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Set Debug", "debug"),
+	)
+	kb = append(kb, ikbRow)
+
+	ikbRow = tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Scan LAN", "scan"),
+	)
+	kb = append(kb, ikbRow)
+
+	ikb.InlineKeyboard = kb
+	msg.ReplyMarkup = &ikb
+	t.USend(bot, us, msg)
+}
+
+func ScanList(bot *tgbotapi.BotAPI, us u.SelectedUser, conf t.Configuration) {
+	var ikbRow []tgbotapi.InlineKeyboardButton
+	me := u.GetUser(us)
+
+	if me.Status != u.SU {
+		NoPermission(bot, us)
+		return
+	}
+
+	msg := t.NewUpdMsg(us, "Select device for WOL and control")
+	ikb := tgbotapi.NewInlineKeyboardMarkup()
+	kb := make([][]tgbotapi.InlineKeyboardButton, 0, len(conf.Devices)+1)
+
+	//Выбрать из найденого
+	for _, device := range conf.Devices {
+		ikbRow = tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(
+				device.Name,
+				fmt.Sprintf("device.%s", device.MAC),
+			),
+		)
+		kb = append(kb, ikbRow)
+	}
+
+	//Запустить новое сканирование
+	ikbRow = tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Run new scan ↻", "rescan"),
+	)
+	kb = append(kb, ikbRow)
+
+	ikb.InlineKeyboard = kb
+	msg.ReplyMarkup = &ikb
+	t.USend(bot, us, msg)
+}
+
+func Rescan(bot *tgbotapi.BotAPI, us u.SelectedUser, conf t.Configuration) {
+	conf.Devices, _ = n.Scan("192.168.0.0/24", n.PortList)
+	ScanList(bot, us, conf)
+}
+
+func SetDevice(bot *tgbotapi.BotAPI, us u.SelectedUser, conf t.Configuration, parts *[]string) {
+
+	if len(*parts) == 1 {
+		*parts = append(*parts, "")
+	}
+
+	for _, device := range conf.Devices {
+		if device.MAC == (*parts)[1] {
+			conf.Device = device
+			msg := t.NewUpdMsg(us, "Device value is set.")
+			t.USend(bot, us, msg)
+			break
+		}
+	}
+	msg := t.NewUpdMsg(us, "Error 404 device not found :(")
+	t.USend(bot, us, msg)
 }
