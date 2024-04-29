@@ -1,12 +1,6 @@
 # TODO List
-* Callback text
-* Debug alert [CRITICAL BUG]
-* Help Cmd
-* NewMsg -> UpdMsg
-* Change Cmds To:
-    * /start
-    * /help
-    * /main
+* Save/load config
+* Debug error [CRITICAL BUG]
 * Scan LAN
 * Wake On Lan
 * Shutdown

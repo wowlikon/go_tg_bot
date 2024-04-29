@@ -306,8 +306,7 @@ func SetDebug(bot *tgbotapi.BotAPI, debug *bool, us u.SelectedUser, parts *[]str
 	t.USend(bot, us, msg)
 }
 
-func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser){
-	var ikbRow []tgbotapi.InlineKeyboardButton
+func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	var msg *tgbotapi.EditMessageTextConfig
 	owner := u.FindSU(us.Users)
 	me := u.GetUser(us)
@@ -318,14 +317,11 @@ func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser){
 
 	//Сообщение для владельца
 	msg = t.NewUpdMsg(owner, fmt.Sprintf("User %s trying to power", me.UserName))
-        ikb := tgbotapi.NewInlineKeyboardMarkup()
-        kb := make([][]tgbotapi.InlineKeyboardButton, 0, 2)
-	
-	ikbRow = tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Power", "power"),
+	kb := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Power", "power"),
+		),
 	)
-	kb = append(kb, ikbRow)
-	ikb.InlineKeyboard = kb
-        msg.ReplyMarkup = &ikb
-        t.USend(bot, owner, msg)
+	msg.ReplyMarkup = &kb
+	t.USend(bot, owner, msg)
 }

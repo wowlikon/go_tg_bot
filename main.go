@@ -16,7 +16,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var debug, key_used bool
+// var debug, key_used bool
+var conf t.Configuration
 
 func main() {
 	var users []u.User
@@ -30,7 +31,7 @@ func main() {
 		return
 	}
 
-	debug = (t.GetIndex(args, "-d") != -1) || (t.GetIndex(args, "--debug") != -1)
+	conf.SetDebug((t.GetIndex(args, "-d") != -1) || (t.GetIndex(args, "--debug") != -1))
 
 	//Загружаем .env
 	err := godotenv.Load(".env")
@@ -41,6 +42,7 @@ func main() {
 	key_len, _ := strconv.Atoi(os.Getenv("KEY_LENGTH"))
 	key, _ := t.GenerateKey(key_len)
 	fmt.Printf("Admin key: %s\n", key)
+	conf.SetKey(key)
 
 	//Создаем бота
 	fmt.Println("Starting bot")
@@ -50,7 +52,7 @@ func main() {
 	}
 
 	fmt.Printf("Bot @%s is online in ", bot.Self.UserName)
-	if debug {
+	if conf.Debug {
 		fmt.Println("debug mode")
 	} else {
 		fmt.Println("standart mode")
@@ -70,7 +72,7 @@ func main() {
 		srcUser := u.FindUser(&users, ToID, t.GetFrom(update).UserName)
 
 		//Вывод данных о сообщении только для владельца
-		if debug && (u.GetUser(srcUser).Status == u.SU) {
+		if conf.Debug && (u.GetUser(srcUser).Status == u.SU) {
 			updateJSON, err := json.MarshalIndent(
 				update, "", "  ",
 			)
@@ -95,10 +97,10 @@ func main() {
 			var msg tgbotapi.MessageConfig
 
 			//Проверка на одноразовый ключ доступа
-			if (update.Message.Text == key) && !key_used {
+			if (update.Message.Text == key) && !conf.KeyUsed {
 				userName := update.Message.From.UserName
 				id := update.Message.From.ID
-				key_used = true
+				conf.UseKey()
 				idx := -1
 				for userID, user := range users {
 					if user.ID == id {
@@ -126,8 +128,6 @@ func main() {
 				switch parts[0] {
 				case "/start":
 					h.Start(bot, srcUser)
-				case "/status":
-					h.Status(bot, srcUser)
 				case "/main":
 					h.Main(bot, srcUser)
 				case "/help":
@@ -148,7 +148,7 @@ func main() {
 
 			//Вывод данных об ошибке только для владельца
 			_, err := bot.Request(callback)
-			if debug && (err != nil) && (u.GetUser(srcUser).Status == u.SU) {
+			if conf.Debug && (err != nil) && (u.GetUser(srcUser).Status == u.SU) {
 				msg := tgbotapi.NewMessage(
 					ToID, fmt.Sprintf("Callback error: \n%s", err),
 				)
@@ -171,13 +171,15 @@ func main() {
 			case "transfer":
 				h.Transfer(bot, srcUser, &parts)
 			case "config":
-				h.SetDebug(bot, &debug, srcUser, &parts) //TODO Config
-			case "terminal", "files", "power", "powerq":
+				h.SetDebug(bot, &conf.Debug, srcUser, &parts) //TODO Config
+			case "power", "powerq":
+				h.RequestPower(bot, srcUser)
+			case "terminal", "files":
 				h.TODO(bot, srcUser)
 			case "help":
 				h.Help(bot, srcUser)
 			case "debug":
-				h.SetDebug(bot, &debug, srcUser, &parts)
+				h.SetDebug(bot, &conf.Debug, srcUser, &parts)
 			default:
 				h.NoCmd(bot, srcUser)
 			}

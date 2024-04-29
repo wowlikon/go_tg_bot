@@ -25,14 +25,6 @@ func Start(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	t.USend(bot, us, msg)
 }
 
-// Вывести статус пользователя
-func Status(bot *tgbotapi.BotAPI, us u.SelectedUser) {
-	me := u.GetUser(us)
-
-	msg := t.NewUpdMsg(us, fmt.Sprintf("You're status: %s", me.Status))
-	t.USend(bot, us, msg)
-}
-
 // Основная команда бота
 func Main(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	var ikbRow []tgbotapi.InlineKeyboardButton
@@ -60,7 +52,7 @@ func Main(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 		kb = append(kb, ikbRow)
 
 		ikbRow = tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Termial", "terminal"),
+			tgbotapi.NewInlineKeyboardButtonData("Terminal", "terminal"),
 		)
 	}
 	kb = append(kb, ikbRow)
