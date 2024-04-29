@@ -407,7 +407,7 @@ func SetDevice(bot *tgbotapi.BotAPI, us u.SelectedUser, conf t.Configuration, pa
 			conf.Device = device
 			msg := t.NewUpdMsg(us, "Device value is set.")
 			t.USend(bot, us, msg)
-			break
+			return
 		}
 	}
 	msg := t.NewUpdMsg(us, "Error 404 device not found :(")
