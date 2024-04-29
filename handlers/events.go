@@ -306,11 +306,7 @@ func SetDebug(bot *tgbotapi.BotAPI, debug *bool, us u.SelectedUser, parts *[]str
 	t.USend(bot, us, msg)
 }
 
-<<<<<<< HEAD
 func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser) {
-=======
-func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser) {
->>>>>>> a6032fd3b2e11d7904a372c4a72c21180567b89f
 	var msg *tgbotapi.EditMessageTextConfig
 	owner := u.FindSU(us.Users)
 	me := u.GetUser(us)
@@ -327,10 +323,5 @@ func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 		),
 	)
 	msg.ReplyMarkup = &kb
-<<<<<<< HEAD
 	t.USend(bot, owner, msg)
-=======
-
-    t.USend(bot, owner, msg)
->>>>>>> a6032fd3b2e11d7904a372c4a72c21180567b89f
 }
