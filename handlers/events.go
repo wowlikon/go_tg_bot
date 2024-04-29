@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	wol "github.com/linde12/gowol"
 	n "github.com/wowlikon/go_lan_scanner/lib"
 	u "github.com/wowlikon/go_tg_bot/users"
 	t "github.com/wowlikon/go_tg_bot/utils"
@@ -325,6 +326,13 @@ func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 	)
 	msg.ReplyMarkup = &kb
 	t.USend(bot, owner, msg)
+}
+
+func Power(bot *tgbotapi.BotAPI, us u.SelectedUser, conf t.Configuration) {
+	if packet, err := wol.NewMagicPacket(conf.Device.MAC); err == nil {
+		packet.Send("255.255.255.255")          // send to broadcast
+		packet.SendPort("255.255.255.255", "7") // specify receiving port
+	}
 }
 
 func Config(bot *tgbotapi.BotAPI, us u.SelectedUser) {

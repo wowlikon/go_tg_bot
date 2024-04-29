@@ -181,8 +181,10 @@ func main() {
 				h.Rescan(bot, srcUser, conf)
 			case "device":
 				h.SetDevice(bot, srcUser, conf, &parts)
-			case "power", "powerq":
+			case "powerq":
 				h.RequestPower(bot, srcUser)
+			case "power":
+				h.Power(bot, srcUser, conf)
 			case "terminal", "files":
 				h.TODO(bot, srcUser)
 			case "help":

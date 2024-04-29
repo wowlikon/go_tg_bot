@@ -4,6 +4,8 @@ github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 h1:wG8n/XJQ07TmjbITcGi
 github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1/go.mod h1:A2S0CWkNylc2phvKXWBBdD3K0iGnDBGbzRpISP2zBl8=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
+github.com/linde12/gowol v0.0.0-20180926075039-797e4d01634c h1:QRJTb9zWXQL+yUajUqbp+VLtN+DQaYRloOxNwylsuVc=
+github.com/linde12/gowol v0.0.0-20180926075039-797e4d01634c/go.mod h1:YeHfx3xIWda3noSterlj6d3+PdRRCTRox269+zhLmbM=
 github.com/wowlikon/go_lan_scanner/lib v0.0.0-20240429141050-29679285116d h1:hJ+u5UGxNMFSvCNcajiyOrR9UVB+PAxlVkWzSEv16uU=
 github.com/wowlikon/go_lan_scanner/lib v0.0.0-20240429141050-29679285116d/go.mod h1:JIgY0rdZjsk7aBA3jKw/GSNWwXZM2Y0ExJNVsbT2w0I=
 golang.org/x/sync v0.1.0 h1:wsuoTGHzEhffawBOhz5CYhcrV4IdKZbEyZjBMuTp12o=
