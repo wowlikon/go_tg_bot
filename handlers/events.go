@@ -392,7 +392,7 @@ func ScanList(bot *tgbotapi.BotAPI, us u.SelectedUser, conf t.Configuration) {
 }
 
 func Rescan(bot *tgbotapi.BotAPI, us u.SelectedUser, conf t.Configuration) {
-	conf.Devices, _ = n.Scan("192.168.0.0/24", n.PortList)
+	conf.Devices, _ = t.FilterDevices(n.Scan("192.168.0.0/24", n.PortList))
 	ScanList(bot, us, conf)
 }
 

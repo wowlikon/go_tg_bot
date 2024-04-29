@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	n "github.com/wowlikon/go_lan_scanner/lib"
 	u "github.com/wowlikon/go_tg_bot/users"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -47,6 +48,21 @@ func GetFrom(update tgbotapi.Update) *tgbotapi.User {
 		return update.CallbackQuery.Message.From
 	}
 	return nil
+}
+
+func FilterDevices(devices []n.Device, err error) ([]n.Device, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	var filtered []n.Device
+	for _, device := range devices {
+		if device.MAC != "" {
+			filtered = append(filtered, device)
+		}
+	}
+	return filtered, nil
+
 }
 
 func NewUpdMsg(us u.SelectedUser, text string) *tgbotapi.EditMessageTextConfig {

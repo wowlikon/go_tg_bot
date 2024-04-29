@@ -39,6 +39,9 @@ func main() {
 		log.Fatalf("Some error occured. Err: %s", err)
 	}
 
+	//Сконирование локальной сети
+	conf.Devices, _ = t.FilterDevices(n.Scan("192.168.0.0/24", n.PortList))
+
 	key_len, _ := strconv.Atoi(os.Getenv("KEY_LENGTH"))
 	key, _ := t.GenerateKey(key_len)
 	fmt.Printf("Admin key: %s\n", key)
@@ -57,9 +60,6 @@ func main() {
 	} else {
 		fmt.Println("standart mode")
 	}
-
-	//Сконирование локальной сети
-	conf.Devices, _ = n.Scan("192.168.0.0/24", n.PortList)
 
 	//Устанавливаем время обновления
 	upd := tgbotapi.NewUpdate(0)
