@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Executable (linux)
 *
 !*/
@@ -10,3 +11,17 @@
 .env
 .vscode/
 .censitive
+=======
+# Executable (linux)
+*
+!*/
+!*.*
+
+# Executable (win)
+*.exe
+
+# Configuration files
+.env
+.vscode/
+.censitive
+>>>>>>> a6032fd3b2e11d7904a372c4a72c21180567b89f

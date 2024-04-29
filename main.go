@@ -171,7 +171,11 @@ func main() {
 			case "transfer":
 				h.Transfer(bot, srcUser, &parts)
 			case "config":
+<<<<<<< HEAD
 				h.SetDebug(bot, &conf.Debug, srcUser, &parts) //TODO Config
+=======
+				h.SetDebug(bot, &debug, srcUser, &parts) //TODO Config
+>>>>>>> a6032fd3b2e11d7904a372c4a72c21180567b89f
 			case "power", "powerq":
 				h.RequestPower(bot, srcUser)
 			case "terminal", "files":
