@@ -1,8 +1,5 @@
 # TODO List
 * Save/load config
-* Debug error [CRITICAL BUG]
-* Scan LAN
-* Wake On Lan
 * Shutdown
 * Remore Input PIN
 * Directory Tree

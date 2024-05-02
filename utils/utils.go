@@ -78,9 +78,7 @@ func USend(bot *tgbotapi.BotAPI, us u.SelectedUser, emsg *tgbotapi.EditMessageTe
 	var err error
 
 	msgID = u.GetUser(us).EditMessage
-	_, err = bot.Send(*emsg)
-
-	if err != nil {
+	if _, err = bot.Send(*emsg); err != nil {
 		if err.Error() != ignore {
 			fmt.Println(err, msgID)
 			msg := tgbotapi.NewMessage(emsg.ChatID, emsg.Text)

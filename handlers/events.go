@@ -330,8 +330,8 @@ func RequestPower(bot *tgbotapi.BotAPI, us u.SelectedUser) {
 
 func Power(bot *tgbotapi.BotAPI, us u.SelectedUser, conf t.Configuration) {
 	if packet, err := wol.NewMagicPacket(conf.Device.MAC); err == nil {
-		packet.Send("255.255.255.255")          // send to broadcast
-		packet.SendPort("255.255.255.255", "7") // specify receiving port
+		packet.Send("255.255.255.255")
+		packet.SendPort("255.255.255.255", "7")
 	}
 }
 

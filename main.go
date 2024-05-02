@@ -34,8 +34,7 @@ func main() {
 	conf.SetDebug((t.GetIndex(args, "-d") != -1) || (t.GetIndex(args, "--debug") != -1))
 
 	//Загружаем .env
-	err := godotenv.Load(".env")
-	if err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalf("Some error occured. Err: %s", err)
 	}
 
@@ -140,9 +139,16 @@ func main() {
 				}
 			} else {
 				//Если просто текст
-				msg := tgbotapi.NewMessage(ToID, "Not text-command TODO")
-				bot.Send(msg)
+				msg := t.NewUpdMsg(srcUser, "Not text-command TODO")
+				t.USend(bot, srcUser, msg)
 			}
+
+			//Удаление сообщения от пользователя
+			msgToDelete := tgbotapi.DeleteMessageConfig{
+				ChatID:    update.Message.Chat.ID,
+				MessageID: update.Message.MessageID,
+			}
+			bot.Request(msgToDelete)
 
 			//Проверка типа на событие кнопки
 		} else if update.CallbackQuery != nil {
